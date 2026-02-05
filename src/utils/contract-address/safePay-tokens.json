@@ -95,5 +95,15 @@
         "decimals": 18
       }
     ]
+  },
+  {
+    "chainId": "5042002",
+    "chainName": "arc",
+    "nativeCurrency": {
+      "symbol": "USDC",
+      "decimals": 18,
+      "name": "USDC"
+    },
+    "supportedTokens": []
   }
 ]
