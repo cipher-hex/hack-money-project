@@ -16,5 +16,11 @@
     "chainId": "5003",
     "chainName": "mantle-sepolia",
     "deployedAt": "2026-01-14T18:39:35.954Z"
+  },
+  {
+    "contractAddress": "0xc45a643D84B8C3a79f9a9c09d886581E8ba03626",
+    "chainId": "5042002",
+    "chainName": "arc",
+    "deployedAt": "2026-02-05T09:18:21.250Z"
   }
 ]

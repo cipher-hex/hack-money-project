@@ -20,6 +20,11 @@ module.exports = {
     },
   },
   networks: {
+    arc: {
+      url: process.env.ARC_RPC_URL || "https://rpc.testnet.arc.network/",
+      accounts: [`0x${PRIVATE_KEY}`],
+      chainId: 5042002,
+    },
     // add sei testnet
     "sei-testnet": {
       url: "https://evm-rpc-testnet.sei-apis.com",

@@ -55,5 +55,13 @@
     "version": "enhanced",
     "features": ["native_currency", "erc20_tokens"],
     "deployedAt": "2026-01-14T18:38:20.007Z"
+  },
+  {
+    "safePayAddress": "0xde97e0707A81600db65228e72dC0D8256C7DCe5B",
+    "chainId": "5042002",
+    "chainName": "arc",
+    "version": "enhanced",
+    "features": ["native_currency", "erc20_tokens"],
+    "deployedAt": "2026-02-05T09:18:00.382Z"
   }
 ]
