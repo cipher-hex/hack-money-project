@@ -1,0 +1,20 @@
+[
+  {
+    "contractAddress": "0x89259f2f3b4B3c446Ac6Da28ae010462950f48d0",
+    "chainId": "11155111",
+    "chainName": "sepolia",
+    "deployedAt": "2025-10-31T13:11:25.072Z"
+  },
+  {
+    "contractAddress": "0x5E0c5FCa7485be3f7e0a0809Eb18Ff5Ab6e6A346",
+    "chainId": "296",
+    "chainName": "hedera-testnet",
+    "deployedAt": "2025-11-21T07:07:28.663Z"
+  },
+  {
+    "contractAddress": "0xd4DA259c0d1aae023B5F19254697f7C307af5aE5",
+    "chainId": "5003",
+    "chainName": "mantle-sepolia",
+    "deployedAt": "2026-01-14T18:39:35.954Z"
+  }
+]

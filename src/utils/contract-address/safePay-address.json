@@ -1,0 +1,59 @@
+[
+  {
+    "safePayAddress": "0xdEE61D7ECc13404c26DE0813C921A32b424b1d70",
+    "chainId": "11155111",
+    "chainName": "sepolia",
+    "version": "enhanced",
+    "features": ["native_currency", "erc20_tokens"],
+    "deployedAt": "2025-09-27T20:30:50.420Z"
+  },
+  {
+    "contractAddress": "0x2D20A07c97899bEcB7cC69accD241642A37addAe",
+    "chainId": "1328",
+    "chainName": "sei-testnet"
+  },
+  {
+    "safePayAddress": "0x0691B3cB298870211871B6B37bc3EB6a2E90e34F",
+    "chainId": "5115",
+    "chainName": "citera-testnet",
+    "version": "enhanced",
+    "features": ["native_currency", "erc20_tokens"],
+    "deployedAt": "2025-09-28T06:01:52.200Z"
+  },
+  {
+    "contractAddress": "0xde97e0707A81600db65228e72dC0D8256C7DCe5B",
+    "chainId": "4801",
+    "chainName": "world-test"
+  },
+  {
+    "safePayAddress": "0xa1e41cBa5EFD3ccd641F48cF303349f60F4b6b63",
+    "chainId": "296",
+    "chainName": "hedera-testnet",
+    "version": "enhanced",
+    "features": ["native_currency", "erc20_tokens"],
+    "deployedAt": "2025-11-21T07:06:59.733Z"
+  },
+  {
+    "contractAddress": "0xde97e0707A81600db65228e72dC0D8256C7DCe5B",
+    "chainId": "545",
+    "chainName": "flow-test"
+  },
+  {
+    "contractAddress": "0x0691B3cB298870211871B6B37bc3EB6a2E90e34F",
+    "chainId": "80002",
+    "chainName": "poly-test"
+  },
+  {
+    "contractAddress": "0xde97e0707A81600db65228e72dC0D8256C7DCe5B",
+    "chainId": "31",
+    "chainName": "rootstock-test"
+  },
+  {
+    "safePayAddress": "0x5e6c03E14002aF759680cd86ad4534D4b8FA0648",
+    "chainId": "5003",
+    "chainName": "mantle-sepolia",
+    "version": "enhanced",
+    "features": ["native_currency", "erc20_tokens"],
+    "deployedAt": "2026-01-14T18:38:20.007Z"
+  }
+]

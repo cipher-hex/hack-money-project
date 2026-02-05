@@ -1,0 +1,99 @@
+[
+  {
+    "chainId": "11155111",
+    "chainName": "sepolia",
+    "nativeCurrency": {
+      "symbol": "ETH",
+      "decimals": 18,
+      "name": "Ethereum"
+    },
+    "supportedTokens": [
+      {
+        "address": "0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9",
+        "symbol": "PYUSD",
+        "name": "PayPal USD",
+        "decimals": 6
+      },
+      {
+        "address": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+        "symbol": "USDC",
+        "name": "Circle USDC",
+        "decimals": 6
+      },
+      {
+        "address": "0x08210F9170F89Ab7658F0B5E3fF39b0E03C594D4",
+        "symbol": "EURC",
+        "name": "Circle EURC",
+        "decimals": 6
+      }
+    ]
+  },
+  {
+    "chainId": "545",
+    "chainName": "flow-test",
+    "nativeCurrency": {
+      "symbol": "FLOW",
+      "decimals": 18,
+      "name": "Flow"
+    },
+    "supportedTokens": [
+      {
+        "address": "0xd2Cab77F7A111f77b2113Fb3CA5824db535D63e3",
+        "symbol": "COIN",
+        "name": "Mock Coin",
+        "decimals": 18
+      }
+    ]
+  },
+  {
+    "chainId": "5115",
+    "chainName": "citera-testnet",
+    "nativeCurrency": {
+      "symbol": "CBTC",
+      "decimals": 18,
+      "name": "Citea BTC"
+    },
+    "supportedTokens": [
+      {
+        "address": "0x3D2a915a6e0D34b7b879B99786b72955DAc6066e",
+        "symbol": "USDT",
+        "name": "Mock USDT",
+        "decimals": 18
+      }
+    ]
+  },
+  {
+    "chainId": "296",
+    "chainName": "hedera-testnet",
+    "nativeCurrency": {
+      "symbol": "HBAR",
+      "decimals": 8,
+      "name": "Hedera HBAR"
+    },
+    "supportedTokens": [
+      {
+        "address": "0x0000000000000000000000000000000000068cda",
+        "symbol": "USDC",
+        "name": "Circle USDC",
+        "decimals": 6
+      }
+    ]
+  },
+  {
+    "chainId": "5003",
+    "chainName": "mantle-sepolia",
+    "nativeCurrency": {
+      "symbol": "MNT",
+      "decimals": 18,
+      "name": "Mantle"
+    },
+    "supportedTokens": [
+      {
+        "address": "0x201eba5cc46d216ce6dc03f6a759e8e766e956ae",
+        "symbol": "USDT",
+        "name": "Tether USDT",
+        "decimals": 18
+      }
+    ]
+  }
+]
