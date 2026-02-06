@@ -37,14 +37,9 @@ export function useTokenConfig() {
   );
 
   useEffect(() => {
-    console.log("useTokenConfig - chainId changed to:", chainId);
     if (chainId) {
       // Find configuration for current chain
       const config = tokenConfigs.find((c) => c.chainId === chainId.toString());
-      console.log(
-        "useTokenConfig - found config:",
-        config?.nativeCurrency.symbol,
-      );
 
       if (config) {
         setCurrentConfig(config);
@@ -74,17 +69,10 @@ export function useTokenConfig() {
 
         setAvailableTokens(tokens);
 
-        // Default to native currency if no token is selected
-        setSelectedToken((prevSelected) => {
-          if (!prevSelected) {
-            return tokens[0];
-          }
-          // Try to find the same token in the new chain's tokens
-          const sameToken = tokens.find(
-            (t) => t.token.symbol === prevSelected.token.symbol,
-          );
-          return sameToken || tokens[0];
-        });
+        // Default to native currency
+        if (!selectedToken) {
+          setSelectedToken(tokens[0]);
+        }
       } else {
         // No configuration found for this chain
         setCurrentConfig(null);
@@ -92,7 +80,7 @@ export function useTokenConfig() {
         setSelectedToken(null);
       }
     }
-  }, [chainId]);
+  }, [chainId, selectedToken]);
 
   const selectToken = (tokenSelection: TokenSelection) => {
     setSelectedToken(tokenSelection);

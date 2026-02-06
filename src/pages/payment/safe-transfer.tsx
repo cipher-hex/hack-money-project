@@ -82,7 +82,7 @@ function SafeTransferContent() {
     if (!address) return;
     try {
       const transactionIds = (await getPendingTransactions(
-        address
+        address,
       )) as string[];
 
       // Check if we have valid transaction IDs
@@ -104,7 +104,7 @@ function SafeTransferContent() {
             console.error(`Failed to fetch pending transaction ${id}:`, err);
             return null;
           }
-        })
+        }),
       );
 
       // Filter out null values (failed transactions)
@@ -150,7 +150,7 @@ function SafeTransferContent() {
             console.error(`❌ Failed to fetch transaction ${id}:`, err);
             return null;
           }
-        })
+        }),
       );
 
       // Filter out null values (failed transactions) and reverse
@@ -264,6 +264,7 @@ function SafeTransferContent() {
         <TransactionHistory
           address={address || undefined}
           balance={balance?.formatted || null}
+          nativeSymbol={balance?.symbol}
           registeredUserId={registeredUserId}
           transactions={transactions}
           refundTransaction={refundTransaction}

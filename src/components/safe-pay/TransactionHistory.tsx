@@ -34,6 +34,7 @@ interface Transaction {
 interface TransactionHistoryProps {
   address: string | undefined;
   balance: string | null;
+  nativeSymbol?: string;
   registeredUserId: string;
   transactions: Transaction[];
   refundTransaction: Function;
@@ -46,6 +47,7 @@ interface TransactionHistoryProps {
 const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   address,
   balance,
+  nativeSymbol,
   registeredUserId,
   transactions,
   refundTransaction,
@@ -58,14 +60,6 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   const { getTokenByAddress, currentConfig } = useTokenConfig();
   const [refundLoading, setRefundLoading] = useState<string | null>(null);
   const [error, setError] = useState("");
-
-  // Debug logging to track chain changes and config updates
-  console.log(
-    "TransactionHistory - chainId:",
-    chainId,
-    "currentConfig:",
-    currentConfig?.nativeCurrency.symbol,
-  );
 
   // Helper function to get token info for a transaction
   const getTokenInfo = (transaction: Transaction) => {
@@ -220,7 +214,9 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                   <p className="text-sm text-gray-600">Current Balance</p>
                   <p className="text-2xl font-bold text-blue-600">
                     {formatTokenAmount(balance, { maxDecimals: 4 })}{" "}
-                    {currentConfig?.nativeCurrency.symbol || "ETH"}
+                    {nativeSymbol ||
+                      currentConfig?.nativeCurrency.symbol ||
+                      "ETH"}
                   </p>
                 </div>
               </div>
