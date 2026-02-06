@@ -59,6 +59,14 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   const [refundLoading, setRefundLoading] = useState<string | null>(null);
   const [error, setError] = useState("");
 
+  // Debug logging to track chain changes and config updates
+  console.log(
+    "TransactionHistory - chainId:",
+    chainId,
+    "currentConfig:",
+    currentConfig?.nativeCurrency.symbol,
+  );
+
   // Helper function to get token info for a transaction
   const getTokenInfo = (transaction: Transaction) => {
     const transactionType = detectTransactionType(transaction);
@@ -100,7 +108,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
 
     // Find the transaction to determine its type
     const transaction = transactions.find(
-      (tx) => tx.transactionId === transactionId
+      (tx) => tx.transactionId === transactionId,
     );
     if (!transaction) return;
 
@@ -289,7 +297,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                             ? transaction.transactionId.substring(0, 6) +
                               "..." +
                               transaction.transactionId.substring(
-                                transaction.transactionId.length - 4
+                                transaction.transactionId.length - 4,
                               )
                             : "N/A"}
                         </div>
@@ -298,7 +306,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                             onClick={() =>
                               copyToClipboard(
                                 transaction.transactionId!,
-                                "Transaction ID"
+                                "Transaction ID",
                               )
                             }
                             className="p-1 hover:bg-blue-100 rounded transition-colors duration-200"
