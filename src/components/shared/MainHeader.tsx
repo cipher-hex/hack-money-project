@@ -7,6 +7,7 @@ import {
   Bars3Icon,
   XMarkIcon,
   ChevronDownIcon,
+  ArrowsRightLeftIcon,
 } from "@heroicons/react/24/outline";
 import { useAccount, useBalance, useChainId } from "wagmi";
 import { useSwitchChain } from "wagmi";
@@ -45,6 +46,11 @@ const MainHeader: React.FC = () => {
       href: "/bulk-transaction",
       label: "Bulk Transfer",
       icon: <UserGroupIcon className="w-5 h-5" />,
+    },
+    {
+      href: "/bridge-swap",
+      label: "Bridge & Swap",
+      icon: <ArrowsRightLeftIcon className="w-5 h-5" />,
     },
   ];
 
