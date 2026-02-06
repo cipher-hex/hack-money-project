@@ -214,7 +214,7 @@ const SendTransfer: React.FC<SendTransferProps> = ({
             amount,
             note,
             selectedToken.token.decimals,
-            chainId
+            chainId,
           );
         } else {
           newTransactionId = await sendERC20ToUserId(
@@ -223,7 +223,7 @@ const SendTransfer: React.FC<SendTransferProps> = ({
             amount,
             note,
             selectedToken.token.decimals,
-            chainId
+            chainId,
           );
         }
       }
@@ -256,9 +256,10 @@ const SendTransfer: React.FC<SendTransferProps> = ({
               <ExclamationTriangleIcon className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
               <div>
                 <h3 className="text-sm font-medium text-red-800">
-                  Unsupported Network
+                  Smart Contract Not Deployed
                 </h3>
                 <p className="text-sm text-red-700 mt-1">
+                  This smart contract is not deployed on the current chain.
                   Please switch to a supported network to continue.
                 </p>
               </div>

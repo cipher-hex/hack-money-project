@@ -1,13 +1,10 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  HomeIcon,
   CurrencyDollarIcon,
-  UserGroupIcon,
   Bars3Icon,
   XMarkIcon,
   ChevronDownIcon,
-  ArrowsRightLeftIcon,
 } from "@heroicons/react/24/outline";
 import { useAccount, useBalance, useChainId } from "wagmi";
 import { useSwitchChain } from "wagmi";
@@ -35,22 +32,18 @@ const MainHeader: React.FC = () => {
     {
       href: "/",
       label: "Home",
-      icon: <HomeIcon className="w-5 h-5" />,
     },
     {
       href: "/safe-transfer",
       label: "Safe P2P",
-      icon: <CurrencyDollarIcon className="w-5 h-5" />,
     },
     {
       href: "/bulk-transaction",
       label: "Bulk Transfer",
-      icon: <UserGroupIcon className="w-5 h-5" />,
     },
     {
       href: "/bridge-swap",
       label: "Bridge & Swap",
-      icon: <ArrowsRightLeftIcon className="w-5 h-5" />,
     },
   ];
 
@@ -97,13 +90,12 @@ const MainHeader: React.FC = () => {
               <Link
                 key={item.href}
                 to={item.href}
-                className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   location.pathname === item.href
                     ? "bg-blue-100 text-blue-700 border border-blue-200"
                     : "text-gray-700 hover:text-blue-700 hover:bg-blue-50"
                 }`}
               >
-                {item.icon}
                 <span>{item.label}</span>
               </Link>
             ))}
@@ -204,13 +196,12 @@ const MainHeader: React.FC = () => {
                   key={item.href}
                   to={item.href}
                   onClick={() => setIsMenuOpen(false)}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     location.pathname === item.href
                       ? "bg-blue-100 text-blue-700 border border-blue-200"
                       : "text-gray-700 hover:text-blue-700 hover:bg-blue-50"
                   }`}
                 >
-                  {item.icon}
                   <span>{item.label}</span>
                 </Link>
               ))}
