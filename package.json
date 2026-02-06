@@ -12,7 +12,12 @@
   },
   "//IMP START": "IMP START - Web3Auth Installation",
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@heroicons/react": "^2.1.5",
+    "@lifi/widget": "^3.40.6",
+    "@mui/material": "^7.3.7",
+    "@mysten/sui": "^2.3.0",
     "@tanstack/react-query": "^5.37.1",
     "@web3auth/modal": "^10.3.0",
     "@web3auth/wallet-services-plugin": "^9.7.0",
@@ -30,8 +35,8 @@
     "react-toastify": "^10.0.5",
     "recharts": "^2.13.3",
     "tailwindcss": "^3.4.1",
-    "viem": "^2.37.3",
-    "wagmi": "^2.14.16",
+    "viem": "^2.45.1",
+    "wagmi": "^2.19.5",
     "web-vitals": "^2.1.4"
   },
   "//IMP END": "IMP END - Web3Auth Installation",

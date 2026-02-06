@@ -23,7 +23,7 @@ const SwapPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50">
       <MainHeader />
-      
+
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header Section */}
         <div className="text-center mb-12">
@@ -31,7 +31,8 @@ const SwapPage: React.FC = () => {
             Bridge & Swap
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Swap tokens across chains seamlessly with the best rates. Powered by LI.FI for optimal routing.
+            Swap tokens across chains seamlessly with the best rates. Powered by
+            LI.FI for optimal routing.
           </p>
         </div>
 
