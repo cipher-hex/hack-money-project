@@ -45,10 +45,6 @@ const MainHeader: React.FC = () => {
       href: "/bridge-swap",
       label: "Bridge & Swap",
     },
-    {
-      href: "/universal-pay",
-      label: "Universal Pay",
-    },
   ];
 
   // Use dynamic networks from wagmi chains
