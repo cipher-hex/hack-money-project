@@ -226,19 +226,6 @@ export const SUPPORTED_CHAINS: Record<number, ChainConfig> = {
 };
 
 // ---------------------------------------------------------------------------
-// DeFi Llama chain name → our chain ID mapping
-// ---------------------------------------------------------------------------
-
-export const DEFI_LLAMA_CHAIN_MAP: Record<string, number> = {
-  Ethereum: 1,
-  Base: 8453,
-  Arbitrum: 42161,
-  Optimism: 10,
-  Polygon: 137,
-  BSC: 56,
-};
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -251,7 +238,7 @@ export const LIFI_INTEGRATOR = "safe-wallet-pay";
 
 export function getTokenConfig(
   chainId: number,
-  asset: string
+  asset: string,
 ): TokenConfig | undefined {
   return SUPPORTED_CHAINS[chainId]?.tokens[asset];
 }
