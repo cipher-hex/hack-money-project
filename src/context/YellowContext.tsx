@@ -6,6 +6,7 @@ import React, {
   useRef,
   useEffect,
 } from "react";
+import type { WalletClient } from "viem";
 import {
   YellowNetworkService,
   YELLOW_SANDBOX_WS,
@@ -22,15 +23,22 @@ interface YellowContextState {
   sessionId: string | null;
   activityLog: ActivityLogEntry[];
   error: string | null;
-  connect: (userAddress: string) => Promise<void>;
+  connect: (
+    userAddress: `0x${string}`,
+    walletClient: WalletClient,
+  ) => Promise<void>;
   disconnect: () => void;
   createSession: (
-    partnerAddress: string,
+    partnerAddress: `0x${string}`,
     myAmount?: string,
     partnerAmount?: string,
-    asset?: string
+    asset?: string,
   ) => Promise<void>;
-  sendPayment: (amount: string, recipient: string) => Promise<void>;
+  sendPayment: (
+    amount: string,
+    recipient: `0x${string}`,
+    asset?: string,
+  ) => Promise<void>;
   clearActivityLog: () => void;
 }
 
@@ -83,7 +91,7 @@ export const YellowProvider: React.FC<{ children: React.ReactNode }> = ({
           break;
 
         case "rpc_error":
-          setError(event.data.message || "Unknown error from ClearNode");
+          setError(event.data.error || "Unknown error from ClearNode");
           break;
 
         case "payment_received":
@@ -100,31 +108,24 @@ export const YellowProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // ---- Actions ----
 
-  const connect = useCallback(async (userAddress: string) => {
-    if (!serviceRef.current) return;
-    setError(null);
+  const connect = useCallback(
+    async (userAddress: `0x${string}`, walletClient: WalletClient) => {
+      if (!serviceRef.current) return;
+      setError(null);
 
-    try {
-      // Create a message signer using window.ethereum (MetaMask / Web3Auth injected provider)
-      const messageSigner = async (message: string): Promise<`0x${string}`> => {
-        if (!window.ethereum) {
-          throw new Error("No Ethereum provider found");
-        }
-        const signature = await window.ethereum.request({
-          method: "personal_sign",
-          params: [message, userAddress],
-        });
-        return signature as `0x${string}`;
-      };
-
-      await serviceRef.current.connect(userAddress, messageSigner);
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "Failed to connect to Yellow Network";
-      setError(msg);
-      throw err;
-    }
-  }, []);
+      try {
+        await serviceRef.current.connect(userAddress, walletClient);
+      } catch (err: unknown) {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : "Failed to connect to Yellow Network";
+        setError(msg);
+        throw err;
+      }
+    },
+    [],
+  );
 
   const disconnect = useCallback(() => {
     serviceRef.current?.disconnect();
@@ -134,10 +135,10 @@ export const YellowProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const createSession = useCallback(
     async (
-      partnerAddress: string,
+      partnerAddress: `0x${string}`,
       myAmount?: string,
       partnerAmount?: string,
-      asset?: string
+      asset?: string,
     ) => {
       if (!serviceRef.current) return;
       setError(null);
@@ -147,7 +148,7 @@ export const YellowProvider: React.FC<{ children: React.ReactNode }> = ({
           partnerAddress,
           myAmount,
           partnerAmount,
-          asset
+          asset,
         );
       } catch (err: unknown) {
         const msg =
@@ -156,16 +157,16 @@ export const YellowProvider: React.FC<{ children: React.ReactNode }> = ({
         throw err;
       }
     },
-    []
+    [],
   );
 
   const sendPayment = useCallback(
-    async (amount: string, recipient: string) => {
+    async (amount: string, recipient: `0x${string}`, asset?: string) => {
       if (!serviceRef.current) return;
       setError(null);
 
       try {
-        await serviceRef.current.sendPayment(amount, recipient);
+        await serviceRef.current.sendPayment(amount, recipient, asset);
       } catch (err: unknown) {
         const msg =
           err instanceof Error ? err.message : "Failed to send payment";
@@ -173,7 +174,7 @@ export const YellowProvider: React.FC<{ children: React.ReactNode }> = ({
         throw err;
       }
     },
-    []
+    [],
   );
 
   const clearActivityLog = useCallback(() => {

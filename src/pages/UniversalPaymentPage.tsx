@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useWalletClient } from "wagmi";
 import { motion } from "framer-motion";
 import MainHeader from "../components/shared/MainHeader";
 import { useYellow } from "../context/YellowContext";
-import type { ConnectionStatus, ActivityLogEntry } from "../services/yellowNetwork";
+import type {
+  ConnectionStatus,
+  ActivityLogEntry,
+} from "../services/yellowNetwork";
 
 // ====================================
 // SUB-COMPONENTS
@@ -29,9 +32,21 @@ const ConnectionStatusBadge: React.FC<{ status: ConnectionStatus }> = ({
       dot: "bg-yellow-400 animate-pulse",
     },
     connected: {
+      color: "text-blue-700",
+      bg: "bg-blue-50 border-blue-200",
+      label: "Connected",
+      dot: "bg-blue-500",
+    },
+    authenticating: {
+      color: "text-yellow-700",
+      bg: "bg-yellow-50 border-yellow-200",
+      label: "Authenticating...",
+      dot: "bg-yellow-400 animate-pulse",
+    },
+    authenticated: {
       color: "text-green-700",
       bg: "bg-green-50 border-green-200",
-      label: "Connected",
+      label: "Authenticated",
       dot: "bg-green-500",
     },
     error: {
@@ -80,22 +95,23 @@ const ConnectSection: React.FC<{
         <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
           Please connect your wallet first using the header button.
         </p>
-      ) : connectionStatus === "connected" ? (
+      ) : connectionStatus === "disconnected" ||
+        connectionStatus === "error" ? (
+        <button
+          onClick={onConnect}
+          className="w-full px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Connect to ClearNode
+        </button>
+      ) : (
         <button
           onClick={onDisconnect}
           className="w-full px-4 py-2.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg border border-red-200 transition-colors"
         >
-          Disconnect from ClearNode
-        </button>
-      ) : (
-        <button
-          onClick={onConnect}
-          disabled={connectionStatus === "connecting"}
-          className="w-full px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {connectionStatus === "connecting"
-            ? "Connecting..."
-            : "Connect to ClearNode"}
+          {connectionStatus === "connecting" ||
+          connectionStatus === "authenticating"
+            ? "Cancel"
+            : "Disconnect from ClearNode"}
         </button>
       )}
     </div>
@@ -111,7 +127,7 @@ const SessionSection: React.FC<{
     partner: string,
     myAmount: string,
     partnerAmount: string,
-    asset: string
+    asset: string,
   ) => void;
 }> = ({ connectionStatus, sessionId, onCreateSession }) => {
   const [partnerAddress, setPartnerAddress] = useState("");
@@ -141,7 +157,7 @@ const SessionSection: React.FC<{
     }
   };
 
-  const isDisabled = connectionStatus !== "connected";
+  const isDisabled = connectionStatus !== "authenticated";
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 hover:border-blue-300 transition-colors duration-200">
@@ -151,9 +167,7 @@ const SessionSection: React.FC<{
 
       {sessionId ? (
         <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
-          <p className="text-sm font-medium text-green-800">
-            Session Active
-          </p>
+          <p className="text-sm font-medium text-green-800">Session Active</p>
           <p className="text-xs text-green-600 font-mono mt-1 break-all">
             {sessionId}
           </p>
@@ -284,8 +298,7 @@ const SendPaymentSection: React.FC<{
     }
   };
 
-  const isDisabled =
-    connectionStatus !== "connected" || !sessionId;
+  const isDisabled = connectionStatus !== "authenticated" || !sessionId;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 hover:border-blue-300 transition-colors duration-200">
@@ -293,7 +306,7 @@ const SendPaymentSection: React.FC<{
         Send Instant Payment
       </h2>
 
-      {!sessionId && connectionStatus === "connected" && (
+      {!sessionId && connectionStatus === "authenticated" && (
         <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
           Create a payment session first to start sending payments.
         </p>
@@ -358,14 +371,13 @@ const ActivityLogSection: React.FC<{
   activityLog: ActivityLogEntry[];
   onClear: () => void;
 }> = ({ activityLog, onClear }) => {
-  const typeConfig: Record<
-    string,
-    { icon: string; color: string }
-  > = {
+  const typeConfig: Record<string, { icon: string; color: string }> = {
     sent: { icon: "↑", color: "text-red-600 bg-red-100" },
     received: { icon: "↓", color: "text-green-600 bg-green-100" },
     session_created: { icon: "⚡", color: "text-blue-600 bg-blue-100" },
     connected: { icon: "🟢", color: "text-green-600 bg-green-100" },
+    authenticated: { icon: "✓", color: "text-green-600 bg-green-100" },
+    info: { icon: "ℹ", color: "text-blue-600 bg-blue-100" },
     error: { icon: "✕", color: "text-red-600 bg-red-100" },
   };
 
@@ -430,6 +442,7 @@ const ActivityLogSection: React.FC<{
 
 const UniversalPaymentPage: React.FC = () => {
   const { address } = useAccount();
+  const { data: walletClient } = useWalletClient();
   const {
     connectionStatus,
     sessionId,
@@ -449,14 +462,12 @@ const UniversalPaymentPage: React.FC = () => {
   }, [error]);
 
   const handleConnect = async () => {
-    if (!address) return;
+    if (!address || !walletClient) return;
     setPageError(null);
     try {
-      await connect(address);
+      await connect(address, walletClient);
     } catch (err: unknown) {
-      setPageError(
-        err instanceof Error ? err.message : "Connection failed"
-      );
+      setPageError(err instanceof Error ? err.message : "Connection failed");
     }
   };
 
@@ -464,15 +475,20 @@ const UniversalPaymentPage: React.FC = () => {
     partner: string,
     myAmount: string,
     partnerAmount: string,
-    asset: string
+    asset: string,
   ) => {
     setPageError(null);
-    await createSession(partner, myAmount, partnerAmount, asset);
+    await createSession(
+      partner as `0x${string}`,
+      myAmount,
+      partnerAmount,
+      asset,
+    );
   };
 
   const handleSendPayment = async (amount: string, recipient: string) => {
     setPageError(null);
-    await sendPayment(amount, recipient);
+    await sendPayment(amount, recipient as `0x${string}`);
   };
 
   return (
