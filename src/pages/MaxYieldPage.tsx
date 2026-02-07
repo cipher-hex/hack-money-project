@@ -457,9 +457,9 @@ const MaxYieldPage: React.FC = () => {
                 <thead>
                   <tr className="border-b border-gray-100 text-left text-gray-500 font-medium">
                     <th className="pb-3 pr-4">#</th>
-                    <th className="pb-3 pr-4">Vault / Pool</th>
+                    <th className="pb-3 pr-4">Protocol</th>
                     <th className="pb-3 pr-4">Chain</th>
-                    <th className="pb-3 pr-4 text-right">Total APY</th>
+                    <th className="pb-3 pr-4 text-right">APY</th>
                     <th className="pb-3 pr-4 text-right">Base APY</th>
                     <th className="pb-3 pr-4 text-right">Reward APY</th>
                     <th className="pb-3 pr-4 text-right">TVL</th>
@@ -483,11 +483,11 @@ const MaxYieldPage: React.FC = () => {
                       </td>
                       <td className="py-4 pr-4">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-gray-800 text-xs leading-tight">
-                            {pool.vaultName}
+                          <span className="font-semibold text-gray-800">
+                            {pool.protocolLabel}
                           </span>
                           {pool.isBest && (
-                            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full whitespace-nowrap">
+                            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">
                               BEST
                             </span>
                           )}
@@ -519,18 +519,8 @@ const MaxYieldPage: React.FC = () => {
                       <td className="py-4 pr-4 text-right text-gray-600">
                         {pool.apyBase.toFixed(2)}%
                       </td>
-                      <td className="py-4 pr-4 text-right">
-                        <span
-                          className={
-                            pool.apyReward > 0
-                              ? "text-purple-600 font-semibold"
-                              : "text-gray-400"
-                          }
-                        >
-                          {pool.apyReward > 0
-                            ? `+${pool.apyReward.toFixed(2)}%`
-                            : "—"}
-                        </span>
+                      <td className="py-4 pr-4 text-right text-gray-600">
+                        {pool.apyReward.toFixed(2)}%
                       </td>
                       <td className="py-4 pr-4 text-right text-gray-600 font-medium">
                         {formatTvl(pool.tvlUsd)}
@@ -701,8 +691,8 @@ const MaxYieldPage: React.FC = () => {
 
         {/* Footer note */}
         <div className="text-center text-xs text-gray-400 pb-8">
-          APY data from Morpho Blue API &amp; Aave V3 API · Cross-chain routing
-          by LI.FI · Yield protocols: Aave V3, Morpho
+          APY data sourced from DeFi Llama · Cross-chain routing by LI.FI ·
+          Yield protocols: Aave V3, Morpho
         </div>
       </div>
     </div>

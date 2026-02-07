@@ -1,5 +1,6 @@
 import type { Address } from "viem";
 import {
+  DEFI_LLAMA_CHAIN_MAP,
   SUPPORTED_CHAINS,
   SUPPORTED_CHAIN_IDS,
   type SupportedAsset,
@@ -21,290 +22,156 @@ export interface YieldPool {
   apyBase: number;
   apyReward: number;
   tvlUsd: number;
-  liquidityUsd: number;
   poolAddress: Address;
   poolMeta: string | null;
-  vaultName: string;
   isBest: boolean;
 }
 
+interface DefiLlamaPool {
+  pool: string;
+  chain: string;
+  project: string;
+  symbol: string;
+  tvlUsd: number;
+  apy: number;
+  apyBase: number | null;
+  apyReward: number | null;
+  underlyingTokens: string[] | null;
+  poolMeta: string | null;
+}
+
 // ---------------------------------------------------------------------------
-// API endpoints
+// DeFi Llama API
 // ---------------------------------------------------------------------------
 
-const MORPHO_GRAPHQL_URL = "https://blue-api.morpho.org/graphql";
-const AAVE_V3_GRAPHQL_URL = "https://api.v3.aave.com/graphql";
+const DEFI_LLAMA_POOLS_URL = "https://yields.llama.fi/pools";
 
-// ---------------------------------------------------------------------------
-// Chain ID → human-readable name (for display)
-// ---------------------------------------------------------------------------
+const PROJECT_FILTER = new Set(["aave-v3", "morpho-v1"]);
 
-const CHAIN_NAME_MAP: Record<number, string> = {
-  1: "Ethereum",
-  8453: "Base",
-  42161: "Arbitrum",
-  10: "Optimism",
-  137: "Polygon",
-  56: "BNB Chain",
+const PROTOCOL_LABEL_MAP: Record<string, string> = {
+  "aave-v3": "Aave V3",
+  "morpho-v1": "Morpho",
+};
+
+const PROTOCOL_KEY_MAP: Record<string, YieldPool["protocol"]> = {
+  "aave-v3": "aave-v3",
+  "morpho-v1": "morpho",
 };
 
 // ---------------------------------------------------------------------------
-// Cache
+// Cache to avoid hammering the API
 // ---------------------------------------------------------------------------
 
-let _morphoCache: { data: YieldPool[]; asset: string; ts: number } | null =
-  null;
-let _aaveCache: { data: YieldPool[]; asset: string; ts: number } | null = null;
+let _cache: { data: DefiLlamaPool[]; ts: number } | null = null;
 const CACHE_TTL_MS = 60_000; // 1 minute
 
-// ---------------------------------------------------------------------------
-// Morpho Blue API — fetch vaults via official GraphQL
-// ---------------------------------------------------------------------------
-
-interface MorphoVaultRaw {
-  address: string;
-  name: string;
-  symbol: string;
-  avgApy: number;
-  avgNetApy: number;
-  liquidityUsd: number;
-  totalAssetsUsd: number;
-  chain: { id: number; network: string };
-  asset: { address: string; symbol: string; decimals: number };
-  rewards: { supplyApr: number; asset: { symbol: string } }[];
-}
-
-async function fetchMorphoVaults(asset: SupportedAsset): Promise<YieldPool[]> {
-  if (
-    _morphoCache &&
-    _morphoCache.asset === asset &&
-    Date.now() - _morphoCache.ts < CACHE_TTL_MS
-  ) {
-    return _morphoCache.data;
+async function fetchAllPools(): Promise<DefiLlamaPool[]> {
+  if (_cache && Date.now() - _cache.ts < CACHE_TTL_MS) {
+    return _cache.data;
   }
 
-  const supportedChainIds = SUPPORTED_CHAIN_IDS;
-
-  const query = `{
-    vaultV2s(
-      first: 200,
-      where: { chainId_in: [${supportedChainIds.join(",")}] }
-    ) {
-      items {
-        address
-        name
-        symbol
-        avgApy
-        avgNetApy
-        liquidityUsd
-        totalAssetsUsd
-        chain { id network }
-        asset { address symbol decimals }
-        rewards { supplyApr asset { symbol } }
-      }
-    }
-  }`;
-
-  console.log("[MaxYield] Fetching Morpho vaults from official API…");
-  const res = await fetch(MORPHO_GRAPHQL_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query }),
-  });
-
+  const res = await fetch(DEFI_LLAMA_POOLS_URL);
   if (!res.ok) {
-    throw new Error(`Morpho API error: ${res.status} ${res.statusText}`);
+    throw new Error(`DeFi Llama API error: ${res.status} ${res.statusText}`);
   }
 
-  const json = await res.json();
-  const items: MorphoVaultRaw[] = json?.data?.vaultV2s?.items ?? [];
-  console.log(`[MaxYield] Morpho API returned ${items.length} vaults`);
-
-  const pools: YieldPool[] = [];
-
-  for (const v of items) {
-    // Filter by target asset
-    const vaultAssetSymbol = v.asset.symbol.toUpperCase();
-    if (!vaultAssetSymbol.includes(asset)) continue;
-
-    // Must be on a supported chain
-    const chainId = v.chain.id;
-    if (!SUPPORTED_CHAINS[chainId]) continue;
-
-    // Must have non-trivial TVL (> $100)
-    if (v.totalAssetsUsd < 100) continue;
-
-    // Base APY from the vault's average gross APY
-    const baseApyPercent = (v.avgApy ?? 0) * 100;
-    // Reward APY = sum of all reward supplyApr
-    const rewardApyPercent =
-      (v.rewards ?? []).reduce((sum, r) => sum + (r.supplyApr ?? 0), 0) * 100;
-    const totalApyPercent = baseApyPercent + rewardApyPercent;
-
-    if (totalApyPercent <= 0) continue;
-
-    pools.push({
-      id: `morpho-${v.address}-${chainId}`,
-      protocol: "morpho",
-      protocolLabel: "Morpho",
-      chain: CHAIN_NAME_MAP[chainId] ?? `Chain ${chainId}`,
-      chainId,
-      symbol: v.asset.symbol,
-      asset,
-      apy: roundTo(totalApyPercent, 2),
-      apyBase: roundTo(baseApyPercent, 2),
-      apyReward: roundTo(rewardApyPercent, 2),
-      tvlUsd: v.totalAssetsUsd,
-      liquidityUsd: v.liquidityUsd,
-      poolAddress: v.address as Address,
-      poolMeta: null,
-      vaultName: `${v.name} (Morph)`,
-      isBest: false,
-    });
-  }
-
-  _morphoCache = { data: pools, asset, ts: Date.now() };
-  return pools;
+  const json = (await res.json()) as { status: string; data: DefiLlamaPool[] };
+  _cache = { data: json.data, ts: Date.now() };
+  return json.data;
 }
 
 // ---------------------------------------------------------------------------
-// Aave V3 API — fetch reserves via official GraphQL
+// Resolve the on-chain deposit address for a given pool
 // ---------------------------------------------------------------------------
 
-interface AaveIncentiveRaw {
-  __typename: string;
-  extraSupplyApr?: { value: string };
-  rewardTokenSymbol?: string;
-}
+function resolvePoolAddress(pool: DefiLlamaPool, chainId: number): Address {
+  const chainConfig = SUPPORTED_CHAINS[chainId];
+  if (!chainConfig) return "0x0000000000000000000000000000000000000000";
 
-interface AaveReserveRaw {
-  underlyingToken: { symbol: string; address: string; decimals: number };
-  supplyInfo: { apy: { value: string }; total: { value: string } };
-  size: { usd: string };
-  incentives: AaveIncentiveRaw[];
-}
-
-interface AaveMarketRaw {
-  name: string;
-  chain: { chainId: number; name: string };
-  address: string;
-  reserves: AaveReserveRaw[];
-}
-
-async function fetchAaveReserves(asset: SupportedAsset): Promise<YieldPool[]> {
-  if (
-    _aaveCache &&
-    _aaveCache.asset === asset &&
-    Date.now() - _aaveCache.ts < CACHE_TTL_MS
-  ) {
-    return _aaveCache.data;
+  if (pool.project === "aave-v3") {
+    return chainConfig.aaveV3Pool;
   }
 
-  const supportedChainIds = SUPPORTED_CHAIN_IDS;
+  // Morpho: try to match a hardcoded vault
+  const asset = extractAssetSymbol(pool.symbol);
+  const vault = chainConfig.morphoVaults.find((v) => v.asset === asset);
+  if (vault) return vault.vaultAddress;
 
-  const query = `{
-    markets(request: { chainIds: [${supportedChainIds.join(",")}] }) {
-      name
-      chain { chainId name }
-      address
-      reserves {
-        underlyingToken { symbol address decimals }
-        supplyInfo { apy { value } total { value } }
-        size { usd }
-        incentives {
-          ... on MeritSupplyIncentive { extraSupplyApr { value } }
-          ... on AaveSupplyIncentive { extraSupplyApr { value } rewardTokenSymbol }
-        }
-      }
-    }
-  }`;
-
-  console.log("[MaxYield] Fetching Aave V3 reserves from official API…");
-  const res = await fetch(AAVE_V3_GRAPHQL_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query }),
-  });
-
-  if (!res.ok) {
-    throw new Error(`Aave V3 API error: ${res.status} ${res.statusText}`);
-  }
-
-  const json = await res.json();
-  const markets: AaveMarketRaw[] = json?.data?.markets ?? [];
-  console.log(`[MaxYield] Aave V3 API returned ${markets.length} markets`);
-
-  const pools: YieldPool[] = [];
-
-  for (const market of markets) {
-    const chainId = market.chain.chainId;
-    const chainConfig = SUPPORTED_CHAINS[chainId];
-    if (!chainConfig) continue;
-
-    for (const reserve of market.reserves) {
-      const sym = reserve.underlyingToken.symbol.toUpperCase();
-      if (sym !== asset) continue;
-
-      const baseApyPercent = parseFloat(reserve.supplyInfo.apy.value) * 100;
-
-      // Sum all supply incentive APRs
-      const rewardApyPercent = (reserve.incentives ?? []).reduce((sum, inc) => {
-        const apr = inc.extraSupplyApr?.value
-          ? parseFloat(inc.extraSupplyApr.value) * 100
-          : 0;
-        return sum + apr;
-      }, 0);
-
-      const totalApyPercent = baseApyPercent + rewardApyPercent;
-      if (totalApyPercent <= 0) continue;
-
-      const sizeUsd = parseFloat(reserve.size.usd) || 0;
-
-      pools.push({
-        id: `aave-${chainId}-${reserve.underlyingToken.address}`,
-        protocol: "aave-v3",
-        protocolLabel: "Aave V3",
-        chain: CHAIN_NAME_MAP[chainId] ?? market.chain.name,
-        chainId,
-        symbol: reserve.underlyingToken.symbol,
-        asset,
-        apy: roundTo(totalApyPercent, 2),
-        apyBase: roundTo(baseApyPercent, 2),
-        apyReward: roundTo(rewardApyPercent, 2),
-        tvlUsd: sizeUsd,
-        liquidityUsd: sizeUsd,
-        poolAddress: chainConfig.aaveV3Pool,
-        poolMeta: market.name,
-        vaultName: `${reserve.underlyingToken.symbol} Supply (Aave V3)`,
-        isBest: false,
-      });
-    }
-  }
-
-  _aaveCache = { data: pools, asset, ts: Date.now() };
-  return pools;
+  // Fallback – pool ID sometimes contains the vault address
+  return "0x0000000000000000000000000000000000000000";
 }
 
 // ---------------------------------------------------------------------------
-// Public API — merge Morpho + Aave, sort by APY
+// Extract normalised asset symbol from DeFi Llama symbol field
+// e.g. "USDC" | "USDC.e" | "USDC-USDT" → "USDC"
+// ---------------------------------------------------------------------------
+
+function extractAssetSymbol(symbol: string): SupportedAsset | null {
+  const upper = symbol.toUpperCase();
+  if (upper.includes("USDC")) return "USDC";
+  if (upper.includes("USDT")) return "USDT";
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Public API
 // ---------------------------------------------------------------------------
 
 export async function fetchYieldPools(
   asset: SupportedAsset,
 ): Promise<YieldPool[]> {
-  // Fetch both in parallel
-  const [morphoPools, aavePools] = await Promise.all([
-    fetchMorphoVaults(asset).catch((err) => {
-      console.error("[MaxYield] Morpho fetch failed:", err);
-      return [] as YieldPool[];
-    }),
-    fetchAaveReserves(asset).catch((err) => {
-      console.error("[MaxYield] Aave fetch failed:", err);
-      return [] as YieldPool[];
-    }),
-  ]);
+  const allPools = await fetchAllPools();
 
-  const pools = [...morphoPools, ...aavePools];
+  const supportedChainNames = new Set(Object.keys(DEFI_LLAMA_CHAIN_MAP));
+
+  const filtered = allPools.filter((p) => {
+    // Must be a supported protocol
+    if (!PROJECT_FILTER.has(p.project)) return false;
+
+    // Must be on a supported chain
+    if (!supportedChainNames.has(p.chain)) return false;
+
+    // Must contain the target asset (single-asset pools only)
+    const poolAsset = extractAssetSymbol(p.symbol);
+    if (poolAsset !== asset) return false;
+
+    // Skip multi-asset LP pools (we want single supply pools)
+    if (p.symbol.includes("-") && !p.symbol.startsWith(asset)) return false;
+
+    // Must have positive APY
+    if (!p.apy || p.apy <= 0) return false;
+
+    // Chain must be in our supported list
+    const chainId = DEFI_LLAMA_CHAIN_MAP[p.chain];
+    if (!chainId || !SUPPORTED_CHAIN_IDS.includes(chainId)) return false;
+
+    // The asset must exist on that chain in our config
+    const tokenConfig = SUPPORTED_CHAINS[chainId]?.tokens[asset];
+    if (!tokenConfig) return false;
+
+    return true;
+  });
+
+  // Map to our YieldPool type
+  const pools: YieldPool[] = filtered.map((p) => {
+    const chainId = DEFI_LLAMA_CHAIN_MAP[p.chain];
+    return {
+      id: p.pool,
+      protocol: PROTOCOL_KEY_MAP[p.project] ?? "aave-v3",
+      protocolLabel: PROTOCOL_LABEL_MAP[p.project] ?? p.project,
+      chain: p.chain,
+      chainId,
+      symbol: p.symbol,
+      asset,
+      apy: roundTo(p.apy, 2),
+      apyBase: roundTo(p.apyBase ?? 0, 2),
+      apyReward: roundTo(p.apyReward ?? 0, 2),
+      tvlUsd: p.tvlUsd,
+      poolAddress: resolvePoolAddress(p, chainId),
+      poolMeta: p.poolMeta,
+      isBest: false,
+    };
+  });
 
   // Sort by APY descending
   pools.sort((a, b) => b.apy - a.apy);
@@ -313,10 +180,6 @@ export async function fetchYieldPools(
   if (pools.length > 0) {
     pools[0].isBest = true;
   }
-
-  console.log(
-    `[MaxYield] Combined: ${morphoPools.length} Morpho + ${aavePools.length} Aave = ${pools.length} total pools`,
-  );
 
   return pools;
 }
