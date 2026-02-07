@@ -13,6 +13,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 // IMP END - Setup Wagmi Provider
 
 import App from "./pages/App";
+import { YellowProvider } from "./context/YellowContext";
 
 // IMP START - Setup Wagmi Provider
 const queryClient = new QueryClient();
@@ -26,12 +27,14 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
       {/* // IMP START - Setup Wagmi Provider */}
       <QueryClientProvider client={queryClient}>
         <WagmiProvider>
-          <App />
+          <YellowProvider>
+            <App />
+          </YellowProvider>
         </WagmiProvider>
       </QueryClientProvider>
       {/* // IMP END - Setup Wagmi Provider */}
       {/* // IMP START - Setup Web3Auth Provider */}
     </Web3AuthProvider>
     {/* // IMP END - Setup Web3Auth Provider */}
-  </BrowserRouter>
+  </BrowserRouter>,
 );
