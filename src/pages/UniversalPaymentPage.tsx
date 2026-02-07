@@ -1,12 +1,40 @@
-import React, { useState, useEffect } from "react";
-import { useAccount, useWalletClient } from "wagmi";
+import React, { useState, useEffect, useMemo } from "react";
+import { useAccount, useWalletClient, useBalance } from "wagmi";
 import { motion } from "framer-motion";
+import { formatUnits } from "viem";
 import MainHeader from "../components/shared/MainHeader";
 import { useYellow } from "../context/YellowContext";
+import type { OffChainBalance } from "../context/YellowContext";
 import type {
   ConnectionStatus,
   ActivityLogEntry,
 } from "../services/yellowNetwork";
+
+// ====================================
+// ASSET CONFIG
+// ====================================
+
+const ASSET_OPTIONS = [
+  { value: "usdc", label: "USDC", decimals: 6 },
+  { value: "usdt", label: "USDT", decimals: 6 },
+  { value: "eth", label: "ETH", decimals: 18 },
+] as const;
+
+const ASSET_CONTRACTS: Record<string, `0x${string}` | undefined> = {
+  usdc: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+  usdt: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+  eth: undefined,
+};
+
+function formatAssetAmount(amount: string, asset: string): string {
+  const cfg = ASSET_OPTIONS.find((a) => a.value === asset);
+  const decimals = cfg?.decimals ?? 6;
+  try {
+    return formatUnits(BigInt(amount), decimals);
+  } catch {
+    return amount;
+  }
+}
 
 // ====================================
 // SUB-COMPONENTS
@@ -26,10 +54,10 @@ const ConnectionStatusBadge: React.FC<{ status: ConnectionStatus }> = ({
       dot: "bg-gray-400",
     },
     connecting: {
-      color: "text-yellow-700",
-      bg: "bg-yellow-50 border-yellow-200",
+      color: "text-blue-700",
+      bg: "bg-blue-50 border-blue-200",
       label: "Connecting...",
-      dot: "bg-yellow-400 animate-pulse",
+      dot: "bg-blue-400 animate-pulse",
     },
     connected: {
       color: "text-blue-700",
@@ -38,10 +66,10 @@ const ConnectionStatusBadge: React.FC<{ status: ConnectionStatus }> = ({
       dot: "bg-blue-500",
     },
     authenticating: {
-      color: "text-yellow-700",
-      bg: "bg-yellow-50 border-yellow-200",
+      color: "text-blue-700",
+      bg: "bg-blue-50 border-blue-200",
       label: "Authenticating...",
-      dot: "bg-yellow-400 animate-pulse",
+      dot: "bg-blue-400 animate-pulse",
     },
     authenticated: {
       color: "text-green-700",
@@ -69,6 +97,99 @@ const ConnectionStatusBadge: React.FC<{ status: ConnectionStatus }> = ({
   );
 };
 
+// ---- Balance Section ----
+
+const BalanceSection: React.FC<{
+  selectedAsset: string;
+  onAssetChange: (asset: string) => void;
+  offChainBalances: OffChainBalance[];
+  onChainBalance: string | undefined;
+  onChainSymbol: string | undefined;
+  connectionStatus: ConnectionStatus;
+  onRefresh: () => void;
+}> = ({
+  selectedAsset,
+  onAssetChange,
+  offChainBalances,
+  onChainBalance,
+  onChainSymbol,
+  connectionStatus,
+  onRefresh,
+}) => {
+  const offChainEntry = offChainBalances.find(
+    (b) => b.asset.toLowerCase() === selectedAsset.toLowerCase(),
+  );
+  const offChainFormatted = offChainEntry
+    ? formatAssetAmount(offChainEntry.amount, selectedAsset)
+    : "0.00";
+
+  const assetLabel =
+    ASSET_OPTIONS.find((a) => a.value === selectedAsset)?.label ??
+    selectedAsset.toUpperCase();
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 hover:border-blue-300 transition-colors duration-200">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-gray-900">Balances</h2>
+        <select
+          value={selectedAsset}
+          onChange={(e) => onAssetChange(e.target.value)}
+          className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          {ASSET_OPTIONS.map((a) => (
+            <option key={a.value} value={a.value}>
+              {a.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        {/* On-Chain Balance */}
+        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+          <p className="text-xs font-medium text-blue-600 uppercase tracking-wide mb-1">
+            On-Chain
+          </p>
+          <p className="text-2xl font-bold text-blue-900">
+            {onChainBalance ?? "—"}
+          </p>
+          <p className="text-xs text-blue-500 mt-1">
+            {onChainSymbol ?? assetLabel}
+          </p>
+        </div>
+
+        {/* Off-Chain Balance */}
+        <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-indigo-600 uppercase tracking-wide mb-1">
+              Off-Chain (Yellow)
+            </p>
+            {connectionStatus === "authenticated" && (
+              <button
+                onClick={onRefresh}
+                className="text-xs text-indigo-500 hover:text-indigo-700 transition-colors"
+                title="Refresh balances"
+              >
+                Refresh
+              </button>
+            )}
+          </div>
+          <p className="text-2xl font-bold text-indigo-900">
+            {connectionStatus === "authenticated" ? offChainFormatted : "—"}
+          </p>
+          <p className="text-xs text-indigo-500 mt-1">{assetLabel}</p>
+        </div>
+      </div>
+
+      {connectionStatus !== "authenticated" && (
+        <p className="text-xs text-gray-400 mt-3 text-center">
+          Connect to ClearNode to view off-chain balance
+        </p>
+      )}
+    </div>
+  );
+};
+
 // ---- Connect Section ----
 
 const ConnectSection: React.FC<{
@@ -92,14 +213,14 @@ const ConnectSection: React.FC<{
       </p>
 
       {!walletAddress ? (
-        <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+        <p className="text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-lg p-3">
           Please connect your wallet first using the header button.
         </p>
       ) : connectionStatus === "disconnected" ||
         connectionStatus === "error" ? (
         <button
           onClick={onConnect}
-          className="w-full px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
         >
           Connect to ClearNode
         </button>
@@ -166,9 +287,9 @@ const SessionSection: React.FC<{
       </h2>
 
       {sessionId ? (
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
-          <p className="text-sm font-medium text-green-800">Session Active</p>
-          <p className="text-xs text-green-600 font-mono mt-1 break-all">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+          <p className="text-sm font-medium text-blue-800">Session Active</p>
+          <p className="text-xs text-blue-600 font-mono mt-1 break-all">
             {sessionId}
           </p>
         </div>
@@ -233,9 +354,11 @@ const SessionSection: React.FC<{
             disabled={isDisabled}
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
           >
-            <option value="usdc">USDC</option>
-            <option value="usdt">USDT</option>
-            <option value="eth">ETH</option>
+            {ASSET_OPTIONS.map((a) => (
+              <option key={a.value} value={a.value}>
+                {a.label}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -307,7 +430,7 @@ const SendPaymentSection: React.FC<{
       </h2>
 
       {!sessionId && connectionStatus === "authenticated" && (
-        <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+        <p className="text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
           Create a payment session first to start sending payments.
         </p>
       )}
@@ -356,7 +479,7 @@ const SendPaymentSection: React.FC<{
         <button
           onClick={handleSend}
           disabled={isDisabled || loading}
-          className="w-full px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? "Sending..." : "Send Payment"}
         </button>
@@ -372,13 +495,13 @@ const ActivityLogSection: React.FC<{
   onClear: () => void;
 }> = ({ activityLog, onClear }) => {
   const typeConfig: Record<string, { icon: string; color: string }> = {
-    sent: { icon: "↑", color: "text-red-600 bg-red-100" },
-    received: { icon: "↓", color: "text-green-600 bg-green-100" },
-    session_created: { icon: "⚡", color: "text-blue-600 bg-blue-100" },
-    connected: { icon: "🟢", color: "text-green-600 bg-green-100" },
-    authenticated: { icon: "✓", color: "text-green-600 bg-green-100" },
-    info: { icon: "ℹ", color: "text-blue-600 bg-blue-100" },
-    error: { icon: "✕", color: "text-red-600 bg-red-100" },
+    sent: { icon: "\u2191", color: "text-red-600 bg-red-100" },
+    received: { icon: "\u2193", color: "text-green-600 bg-green-100" },
+    session_created: { icon: "\u26A1", color: "text-blue-600 bg-blue-100" },
+    connected: { icon: "\u25CF", color: "text-blue-600 bg-blue-100" },
+    authenticated: { icon: "\u2713", color: "text-green-600 bg-green-100" },
+    info: { icon: "\u2139", color: "text-blue-600 bg-blue-100" },
+    error: { icon: "\u2715", color: "text-red-600 bg-red-100" },
   };
 
   return (
@@ -406,7 +529,7 @@ const ActivityLogSection: React.FC<{
         <div className="space-y-2 max-h-80 overflow-y-auto">
           {activityLog.map((entry) => {
             const cfg = typeConfig[entry.type] || {
-              icon: "•",
+              icon: "\u2022",
               color: "text-gray-600 bg-gray-100",
             };
             return (
@@ -447,15 +570,32 @@ const UniversalPaymentPage: React.FC = () => {
     connectionStatus,
     sessionId,
     activityLog,
+    offChainBalances,
     error,
     connect,
     disconnect,
     createSession,
     sendPayment,
+    refreshBalances,
     clearActivityLog,
   } = useYellow();
 
   const [pageError, setPageError] = useState<string | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState("usdc");
+
+  // On-chain balance for selected asset
+  const tokenAddress = ASSET_CONTRACTS[selectedAsset];
+  const { data: onChainBalanceData } = useBalance({
+    address: address,
+    token: tokenAddress,
+  });
+
+  const onChainFormatted = useMemo(() => {
+    if (!onChainBalanceData) return undefined;
+    return onChainBalanceData.formatted;
+  }, [onChainBalanceData]);
+
+  const onChainSymbol = onChainBalanceData?.symbol;
 
   useEffect(() => {
     if (error) setPageError(error);
@@ -492,13 +632,13 @@ const UniversalPaymentPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-amber-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       <MainHeader />
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-yellow-500 to-amber-600 bg-clip-text text-transparent mb-4">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
             Universal Payment
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -545,9 +685,9 @@ const UniversalPaymentPage: React.FC = () => {
             ].map((item) => (
               <div
                 key={item.step}
-                className="flex flex-col items-center text-center p-4 rounded-xl bg-amber-50 border border-amber-100"
+                className="flex flex-col items-center text-center p-4 rounded-xl bg-blue-50 border border-blue-100"
               >
-                <span className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center text-sm font-bold mb-2">
+                <span className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold mb-2">
                   {item.step}
                 </span>
                 <p className="text-sm font-semibold text-gray-800">
@@ -557,6 +697,19 @@ const UniversalPaymentPage: React.FC = () => {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Balance Section - Full Width */}
+        <div className="mb-8">
+          <BalanceSection
+            selectedAsset={selectedAsset}
+            onAssetChange={setSelectedAsset}
+            offChainBalances={offChainBalances}
+            onChainBalance={onChainFormatted}
+            onChainSymbol={onChainSymbol}
+            connectionStatus={connectionStatus}
+            onRefresh={refreshBalances}
+          />
         </div>
 
         {/* Main Grid */}

@@ -9,10 +9,15 @@ import React, {
 import type { WalletClient } from "viem";
 import {
   YellowNetworkService,
-  YELLOW_SANDBOX_WS,
+  YELLOW_PRODUCTION_WS,
   type ConnectionStatus,
   type ActivityLogEntry,
 } from "../services/yellowNetwork";
+
+export interface OffChainBalance {
+  asset: string;
+  amount: string;
+}
 
 // ====================================
 // CONTEXT TYPES
@@ -22,6 +27,7 @@ interface YellowContextState {
   connectionStatus: ConnectionStatus;
   sessionId: string | null;
   activityLog: ActivityLogEntry[];
+  offChainBalances: OffChainBalance[];
   error: string | null;
   connect: (
     userAddress: `0x${string}`,
@@ -39,6 +45,7 @@ interface YellowContextState {
     recipient: `0x${string}`,
     asset?: string,
   ) => Promise<void>;
+  refreshBalances: () => Promise<void>;
   clearActivityLog: () => void;
 }
 
@@ -60,11 +67,14 @@ export const YellowProvider: React.FC<{ children: React.ReactNode }> = ({
     useState<ConnectionStatus>("disconnected");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([]);
+  const [offChainBalances, setOffChainBalances] = useState<OffChainBalance[]>(
+    [],
+  );
   const [error, setError] = useState<string | null>(null);
 
   // Initialize service once
   useEffect(() => {
-    serviceRef.current = new YellowNetworkService(YELLOW_SANDBOX_WS);
+    serviceRef.current = new YellowNetworkService(YELLOW_PRODUCTION_WS);
 
     const unsubscribe = serviceRef.current.addEventListener((event) => {
       switch (event.type) {
@@ -92,6 +102,10 @@ export const YellowProvider: React.FC<{ children: React.ReactNode }> = ({
 
         case "rpc_error":
           setError(event.data.error || "Unknown error from ClearNode");
+          break;
+
+        case "ledger_balances":
+          setOffChainBalances(event.data.balances || []);
           break;
 
         case "payment_received":
@@ -177,6 +191,15 @@ export const YellowProvider: React.FC<{ children: React.ReactNode }> = ({
     [],
   );
 
+  const refreshBalances = useCallback(async () => {
+    if (!serviceRef.current) return;
+    try {
+      await serviceRef.current.fetchLedgerBalances();
+    } catch (err) {
+      console.error("Failed to refresh balances:", err);
+    }
+  }, []);
+
   const clearActivityLog = useCallback(() => {
     setActivityLog([]);
   }, []);
@@ -187,11 +210,13 @@ export const YellowProvider: React.FC<{ children: React.ReactNode }> = ({
         connectionStatus,
         sessionId,
         activityLog,
+        offChainBalances,
         error,
         connect,
         disconnect,
         createSession,
         sendPayment,
+        refreshBalances,
         clearActivityLog,
       }}
     >

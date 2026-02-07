@@ -4,6 +4,7 @@ import {
   createEIP712AuthMessageSigner,
   createAppSessionMessage,
   createTransferMessage,
+  createGetLedgerBalancesMessage,
   parseAnyRPCResponse,
   RPCMethod,
   RPCProtocolVersion,
@@ -73,7 +74,7 @@ export class YellowNetworkService {
   private authResolve: (() => void) | null = null;
   private authReject: ((err: Error) => void) | null = null;
 
-  constructor(endpoint: string = YELLOW_SANDBOX_WS) {
+  constructor(endpoint: string = YELLOW_PRODUCTION_WS) {
     this.endpoint = endpoint;
     // Restore JWT from storage if available
     this.jwtToken = localStorage.getItem("yellow_jwt_token");
@@ -275,6 +276,11 @@ export class YellowNetworkService {
         timestamp: Date.now(),
       });
 
+      // Fetch initial ledger balances after auth
+      this.fetchLedgerBalances().catch((err) =>
+        console.error("Failed to fetch initial balances:", err),
+      );
+
       // Resolve the connect() promise
       if (this.authResolve) {
         this.authResolve();
@@ -336,6 +342,18 @@ export class YellowNetworkService {
     this.authResolve = null;
     this.authReject = null;
     this.emit("status_change", { status: "disconnected" });
+  }
+
+  // ---- Balance ----
+
+  async fetchLedgerBalances(): Promise<void> {
+    if (!this.ws || !this._isAuthenticated || !this.userAddress) {
+      throw new Error("Not authenticated. Call connect() first.");
+    }
+
+    const signer = this.getMessageSigner();
+    const msg = await createGetLedgerBalancesMessage(signer, this.userAddress);
+    this.ws.send(msg);
   }
 
   // ---- Session Management ----
@@ -542,10 +560,19 @@ export class YellowNetworkService {
           break;
         }
 
-        // ---- Balance Update ----
+        // ---- Ledger Balances Response ----
+        case RPCMethod.GetLedgerBalances: {
+          const ledgerParams = (message as any).params;
+          const balances = ledgerParams?.ledgerBalances || [];
+          this.emit("ledger_balances", { balances });
+          break;
+        }
+
+        // ---- Balance Update (push) ----
         case RPCMethod.BalanceUpdate: {
           const balanceParams = (message as any).params;
-          this.emit("balance_update", balanceParams);
+          const updatedBalances = balanceParams?.balanceUpdates || [];
+          this.emit("ledger_balances", { balances: updatedBalances });
           this.emit("activity", {
             type: "info",
             message: "Balance updated",
