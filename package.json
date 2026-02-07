@@ -16,6 +16,7 @@
     "@emotion/styled": "^11.14.1",
     "@erc7824/nitrolite": "^0.5.3",
     "@heroicons/react": "^2.1.5",
+    "@lifi/sdk": "^3.15.5",
     "@lifi/widget": "^3.40.6",
     "@mui/material": "^7.3.7",
     "@mysten/sui": "^2.3.0",
