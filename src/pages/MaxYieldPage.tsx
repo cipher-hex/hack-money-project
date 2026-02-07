@@ -13,6 +13,7 @@ import {
   initLifiSdk,
   getComposerQuote,
   executeComposerRoute,
+  executeSameChainDeposit,
   type ExecutionUpdate,
   type ExecutionStatus,
   type ComposerQuoteResult,
@@ -23,17 +24,34 @@ import {
 // ---------------------------------------------------------------------------
 
 const StatusBadge: React.FC<{ status: ExecutionStatus }> = ({ status }) => {
-  const map: Record<ExecutionStatus, { bg: string; text: string; label: string }> = {
+  const map: Record<
+    ExecutionStatus,
+    { bg: string; text: string; label: string }
+  > = {
     idle: { bg: "bg-gray-100", text: "text-gray-600", label: "Ready" },
-    approving: { bg: "bg-yellow-100", text: "text-yellow-700", label: "Approving" },
+    approving: {
+      bg: "bg-yellow-100",
+      text: "text-yellow-700",
+      label: "Approving",
+    },
     bridging: { bg: "bg-blue-100", text: "text-blue-700", label: "Bridging" },
-    depositing: { bg: "bg-indigo-100", text: "text-indigo-700", label: "Depositing" },
-    completed: { bg: "bg-green-100", text: "text-green-700", label: "Completed" },
+    depositing: {
+      bg: "bg-indigo-100",
+      text: "text-indigo-700",
+      label: "Depositing",
+    },
+    completed: {
+      bg: "bg-green-100",
+      text: "text-green-700",
+      label: "Completed",
+    },
     failed: { bg: "bg-red-100", text: "text-red-700", label: "Failed" },
   };
   const s = map[status];
   return (
-    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${s.bg} ${s.text}`}>
+    <span
+      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${s.bg} ${s.text}`}
+    >
       {status !== "idle" && status !== "completed" && status !== "failed" && (
         <span className="w-2 h-2 mr-2 rounded-full bg-current animate-pulse" />
       )}
@@ -65,18 +83,22 @@ const ProgressStepper: React.FC<{ status: ExecutionStatus }> = ({ status }) => {
                   isDone
                     ? "bg-green-500 text-white"
                     : isActive
-                    ? "bg-blue-600 text-white ring-4 ring-blue-200"
-                    : "bg-gray-200 text-gray-500"
+                      ? "bg-blue-600 text-white ring-4 ring-blue-200"
+                      : "bg-gray-200 text-gray-500"
                 }`}
               >
                 {isDone ? "✓" : i + 1}
               </div>
-              <span className={`mt-1 text-xs font-medium ${isActive ? "text-blue-700" : "text-gray-500"}`}>
+              <span
+                className={`mt-1 text-xs font-medium ${isActive ? "text-blue-700" : "text-gray-500"}`}
+              >
                 {step.label}
               </span>
             </div>
             {i < steps.length - 1 && (
-              <div className={`flex-1 h-0.5 mx-2 ${isDone ? "bg-green-400" : "bg-gray-200"}`} />
+              <div
+                className={`flex-1 h-0.5 mx-2 ${isDone ? "bg-green-400" : "bg-gray-200"}`}
+              />
             )}
           </React.Fragment>
         );
@@ -107,12 +129,18 @@ const MaxYieldPage: React.FC = () => {
 
   // Quote & execution
   const [selectedPool, setSelectedPool] = useState<YieldPool | null>(null);
-  const [quoteResult, setQuoteResult] = useState<ComposerQuoteResult | null>(null);
+  const [quoteResult, setQuoteResult] = useState<ComposerQuoteResult | null>(
+    null,
+  );
   const [quoting, setQuoting] = useState(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
-  const [executionStatus, setExecutionStatus] = useState<ExecutionStatus>("idle");
+  const [executionStatus, setExecutionStatus] =
+    useState<ExecutionStatus>("idle");
   const [executionMessage, setExecutionMessage] = useState("");
   const [executionTxHash, setExecutionTxHash] = useState<string | null>(null);
+
+  // Pagination for yield table
+  const [visibleCount, setVisibleCount] = useState(10);
 
   const chains = getAllChainConfigs();
 
@@ -128,7 +156,7 @@ const MaxYieldPage: React.FC = () => {
       async (chainId: number) => {
         await switchChainAsync({ chainId });
         return walletClient;
-      }
+      },
     );
   }, [walletClient, switchChainAsync]);
 
@@ -139,10 +167,14 @@ const MaxYieldPage: React.FC = () => {
   const loadPools = useCallback(async () => {
     setLoadingPools(true);
     setPoolError(null);
+    setVisibleCount(10);
+    console.log(`[MaxYield] Fetching yield pools for ${selectedAsset}…`);
     try {
       const data = await fetchYieldPools(selectedAsset);
+      console.log(`[MaxYield] Fetched ${data.length} pools`);
       setPools(data);
     } catch (err: any) {
+      console.error("[MaxYield] Pool fetch error:", err);
       setPoolError(err.message ?? "Failed to fetch yield data");
     } finally {
       setLoadingPools(false);
@@ -160,6 +192,11 @@ const MaxYieldPage: React.FC = () => {
   const handleGetQuote = async (pool: YieldPool) => {
     if (!address || !amount || parseFloat(amount) <= 0) return;
 
+    console.log("[MaxYield] handleGetQuote", {
+      pool: pool.id,
+      chain: pool.chain,
+      protocol: pool.protocol,
+    });
     setSelectedPool(pool);
     setQuoteResult(null);
     setQuoteError(null);
@@ -176,8 +213,10 @@ const MaxYieldPage: React.FC = () => {
         userAddress: address as `0x${string}`,
         targetPool: pool,
       });
+      console.log("[MaxYield] Quote result:", result);
       setQuoteResult(result);
     } catch (err: any) {
+      console.error("[MaxYield] Quote error:", err);
       setQuoteError(err.message ?? "Failed to get quote");
     } finally {
       setQuoting(false);
@@ -194,17 +233,37 @@ const MaxYieldPage: React.FC = () => {
     setExecutionStatus("approving");
     setExecutionMessage("Starting transaction…");
 
-    try {
-      await executeComposerRoute(
-        quoteResult.quote,
-        (update: ExecutionUpdate) => {
-          setExecutionStatus(update.status);
-          setExecutionMessage(update.message);
-          if (update.txHash) setExecutionTxHash(update.txHash);
-        }
+    const onUpdate = (update: ExecutionUpdate) => {
+      console.log(
+        "[MaxYield] Execution update:",
+        update.status,
+        update.message,
       );
+      setExecutionStatus(update.status);
+      setExecutionMessage(update.message);
+      if (update.txHash) setExecutionTxHash(update.txHash);
+    };
+
+    try {
+      if (quoteResult.isSameChain) {
+        // Same-chain: direct approve + deposit via wallet
+        if (!walletClient) {
+          onUpdate({ status: "failed", message: "Wallet not connected" });
+          return;
+        }
+        console.log("[MaxYield] Executing same-chain deposit…");
+        await executeSameChainDeposit(
+          quoteResult.quote,
+          walletClient,
+          onUpdate,
+        );
+      } else {
+        // Cross-chain: LI.FI Composer
+        console.log("[MaxYield] Executing cross-chain route via LI.FI…");
+        await executeComposerRoute(quoteResult.quote, onUpdate);
+      }
     } catch {
-      // Error handled inside executeComposerRoute callback
+      // Error handled inside the execution callbacks
     }
   };
 
@@ -242,9 +301,41 @@ const MaxYieldPage: React.FC = () => {
             Max Yield Optimizer
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Find the highest APY for your stablecoins across chains. Bridge &amp;
-            deposit in a single transaction powered by LI.FI Composer.
+            Find the highest APY for your stablecoins across chains. Bridge
+            &amp; deposit in a single transaction powered by LI.FI Composer.
           </p>
+        </div>
+
+        {/* ---- How It Works ---- */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {[
+            {
+              step: "1",
+              title: "Choose Asset",
+              desc: "Select your source chain and stablecoin (USDC or USDT) with the amount you want to deposit.",
+            },
+            {
+              step: "2",
+              title: "Compare Yields",
+              desc: "Live APY data from Aave V3 and Morpho across 6 chains, sorted by highest yield.",
+            },
+            {
+              step: "3",
+              title: "One-Click Deposit",
+              desc: "LI.FI Composer bridges your asset cross-chain and deposits it into the yield pool — all in one transaction.",
+            },
+          ].map((item) => (
+            <div
+              key={item.step}
+              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center"
+            >
+              <div className="w-12 h-12 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center mx-auto mb-4 text-lg font-bold">
+                {item.step}
+              </div>
+              <h3 className="font-semibold text-gray-800 mb-2">{item.title}</h3>
+              <p className="text-sm text-gray-500">{item.desc}</p>
+            </div>
+          ))}
         </div>
 
         {/* ---- Source Config Panel ---- */}
@@ -294,8 +385,8 @@ const MaxYieldPage: React.FC = () => {
               </div>
               {!hasToken && (
                 <p className="mt-1 text-xs text-amber-600">
-                  {selectedAsset} is not available on {sourceChain?.name}.
-                  You can still bridge from this chain via LI.FI.
+                  {selectedAsset} is not available on {sourceChain?.name}. You
+                  can still bridge from this chain via LI.FI.
                 </p>
               )}
             </div>
@@ -376,13 +467,15 @@ const MaxYieldPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {pools.map((pool, idx) => (
+                  {pools.slice(0, visibleCount).map((pool, idx) => (
                     <tr
                       key={pool.id}
                       className={`border-b border-gray-50 transition-colors hover:bg-blue-50/50 ${
                         pool.isBest ? "bg-green-50/50" : ""
                       } ${
-                        selectedPool?.id === pool.id ? "ring-2 ring-blue-300 bg-blue-50" : ""
+                        selectedPool?.id === pool.id
+                          ? "ring-2 ring-blue-300 bg-blue-50"
+                          : ""
                       }`}
                     >
                       <td className="py-4 pr-4 font-medium text-gray-400">
@@ -416,8 +509,8 @@ const MaxYieldPage: React.FC = () => {
                             pool.apy >= 5
                               ? "text-green-600"
                               : pool.apy >= 2
-                              ? "text-blue-600"
-                              : "text-gray-700"
+                                ? "text-blue-600"
+                                : "text-gray-700"
                           }`}
                         >
                           {pool.apy.toFixed(2)}%
@@ -435,7 +528,12 @@ const MaxYieldPage: React.FC = () => {
                       <td className="py-4 text-center">
                         <button
                           onClick={() => handleGetQuote(pool)}
-                          disabled={!isConnected || !amount || parseFloat(amount) <= 0 || quoting}
+                          disabled={
+                            !isConnected ||
+                            !amount ||
+                            parseFloat(amount) <= 0 ||
+                            quoting
+                          }
                           className="px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                         >
                           {quoting && selectedPool?.id === pool.id
@@ -447,6 +545,18 @@ const MaxYieldPage: React.FC = () => {
                   ))}
                 </tbody>
               </table>
+
+              {/* Load More button */}
+              {visibleCount < pools.length && (
+                <div className="text-center mt-4">
+                  <button
+                    onClick={() => setVisibleCount((prev) => prev + 10)}
+                    className="px-6 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+                  >
+                    Show More ({pools.length - visibleCount} remaining)
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -488,7 +598,9 @@ const MaxYieldPage: React.FC = () => {
                     <p className="font-semibold text-gray-800">
                       {selectedPool.protocolLabel}
                     </p>
-                    <p className="text-xs text-gray-500">{selectedPool.chain}</p>
+                    <p className="text-xs text-gray-500">
+                      {selectedPool.chain}
+                    </p>
                   </div>
                   <div className="bg-gray-50 rounded-xl p-4">
                     <p className="text-xs text-gray-500 mb-1">APY</p>
@@ -522,7 +634,7 @@ const MaxYieldPage: React.FC = () => {
                             selectedPool.chainId === selectedChainId
                               ? selectedChainId
                               : selectedPool.chainId,
-                            executionTxHash
+                            executionTxHash,
                           )}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -576,38 +688,6 @@ const MaxYieldPage: React.FC = () => {
             )}
           </div>
         )}
-
-        {/* ---- How It Works ---- */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {[
-            {
-              step: "1",
-              title: "Choose Asset",
-              desc: "Select your source chain and stablecoin (USDC or USDT) with the amount you want to deposit.",
-            },
-            {
-              step: "2",
-              title: "Compare Yields",
-              desc: "Live APY data from Aave V3 and Morpho across 6 chains, sorted by highest yield.",
-            },
-            {
-              step: "3",
-              title: "One-Click Deposit",
-              desc: "LI.FI Composer bridges your asset cross-chain and deposits it into the yield pool — all in one transaction.",
-            },
-          ].map((item) => (
-            <div
-              key={item.step}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center"
-            >
-              <div className="w-12 h-12 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center mx-auto mb-4 text-lg font-bold">
-                {item.step}
-              </div>
-              <h3 className="font-semibold text-gray-800 mb-2">{item.title}</h3>
-              <p className="text-sm text-gray-500">{item.desc}</p>
-            </div>
-          ))}
-        </div>
 
         {/* Footer note */}
         <div className="text-center text-xs text-gray-400 pb-8">
