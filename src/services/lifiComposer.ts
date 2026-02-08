@@ -362,70 +362,169 @@ export async function executeSameChainDeposit(
 }
 
 // ---------------------------------------------------------------------------
-// Execute CROSS-CHAIN route via LI.FI (bridge + deposit)
+// Execute CROSS-CHAIN route via LI.FI — manual execution
+// We send the quote's transactionRequest directly and poll getStatus,
+// because convertQuoteToRoute + executeRoute loses contractCalls when the
+// SDK refreshes the step internally (prepareUpdatedStep).
 // ---------------------------------------------------------------------------
 
 export async function executeComposerRoute(
   quote: any,
+  walletClient: WalletClient,
   onUpdate: (update: ExecutionUpdate) => void,
 ): Promise<void> {
-  const { executeRoute, convertQuoteToRoute } = await import("@lifi/sdk");
+  const { getStatus } = await import("@lifi/sdk");
 
-  console.log("[MaxYield] executeComposerRoute — converting quote to route…");
-  const route = convertQuoteToRoute(quote);
-  console.log("[MaxYield] Route:", route);
+  const txRequest = quote.transactionRequest;
+  if (!txRequest) {
+    throw new Error(
+      "No transactionRequest in quote — cannot execute cross-chain transfer.",
+    );
+  }
 
-  onUpdate({
-    status: "approving",
-    message: "Requesting wallet approval…",
+  const fromAddress = (quote.action?.fromAddress ?? txRequest.from) as Address;
+  if (!fromAddress) {
+    throw new Error("No from address found in the quote.");
+  }
+
+  console.log("[MaxYield] executeComposerRoute — manual execution", {
+    from: fromAddress,
+    to: txRequest.to,
+    value: txRequest.value,
+    fromChain: quote.action?.fromChainId,
+    toChain: quote.action?.toChainId,
+    tool: quote.tool,
   });
 
   try {
-    await executeRoute(route, {
-      updateRouteHook(updatedRoute: any) {
-        const currentStep = updatedRoute.steps?.[updatedRoute.steps.length - 1];
-        const process = currentStep?.execution?.process;
+    // ----- Step 1: ERC-20 approval (if needed) -----
+    const approvalAddress = quote.estimate?.approvalAddress;
+    const fromTokenAddr = quote.action?.fromToken?.address;
+    const NATIVE = "0x0000000000000000000000000000000000000000";
+    const needsApproval =
+      approvalAddress &&
+      fromTokenAddr &&
+      fromTokenAddr.toLowerCase() !== NATIVE;
 
-        if (!process || process.length === 0) return;
+    if (needsApproval) {
+      onUpdate({ status: "approving", message: "Approving token spend…" });
 
-        const latest = process[process.length - 1];
-        console.log("[MaxYield] Route update:", latest.type, latest.message);
+      const approveAmount = BigInt(quote.action.fromAmount);
+      const approveCalldata = buildApproveCalldata(
+        approvalAddress as Address,
+        approveAmount,
+      );
 
-        if (latest.type === "TOKEN_ALLOWANCE") {
-          onUpdate({
-            status: "approving",
-            message: latest.message ?? "Approving token…",
-            txHash: latest.txHash,
-            substatus: latest.substatus,
-          });
-        } else if (latest.type === "CROSS_CHAIN" || latest.type === "SWAP") {
-          onUpdate({
-            status: "bridging",
-            message: latest.message ?? "Bridging assets cross-chain…",
-            txHash: latest.txHash,
-            substatus: latest.substatus,
-          });
-        } else {
-          onUpdate({
-            status: "depositing",
-            message: latest.message ?? "Depositing into yield protocol…",
-            txHash: latest.txHash,
-            substatus: latest.substatus,
-          });
-        }
-      },
+      console.log("[MaxYield] Approving via raw tx", {
+        token: fromTokenAddr,
+        spender: approvalAddress,
+        amount: approveAmount.toString(),
+      });
+
+      const approveTx = await walletClient.sendTransaction({
+        to: fromTokenAddr as Address,
+        data: approveCalldata,
+        value: 0n,
+      } as any);
+
+      console.log("[MaxYield] Approval tx:", approveTx);
+      onUpdate({
+        status: "approving",
+        message: "Approval submitted — waiting for confirmation…",
+        txHash: approveTx,
+      });
+
+      // Wait so the approval is mined before the main tx
+      await new Promise((r) => setTimeout(r, 8_000));
+    }
+
+    // ----- Step 2: Send the bridge + deposit transaction -----
+    onUpdate({
+      status: "bridging",
+      message: "Sending cross-chain bridge & deposit transaction…",
     });
 
-    console.log("[MaxYield] Cross-chain route completed.");
+    const txHash = await walletClient.sendTransaction({
+      to: txRequest.to as Address,
+      data: txRequest.data as `0x${string}`,
+      value: txRequest.value != null ? BigInt(txRequest.value) : 0n,
+      gas: txRequest.gasLimit ? BigInt(txRequest.gasLimit) : undefined,
+    } as any);
+
+    console.log("[MaxYield] Bridge tx hash:", txHash);
     onUpdate({
-      status: "completed",
-      message: "Successfully deposited into yield pool!",
+      status: "bridging",
+      message: "Transaction submitted — monitoring cross-chain transfer…",
+      txHash,
+    });
+
+    // ----- Step 3: Poll getStatus until DONE or FAILED -----
+    const fromChainId = quote.action?.fromChainId;
+    const toChainId = quote.action?.toChainId;
+    const bridge = quote.tool;
+    const POLL_MS = 10_000;
+    const MAX_POLLS = 120; // ~20 min
+
+    for (let i = 0; i < MAX_POLLS; i++) {
+      await new Promise((r) => setTimeout(r, POLL_MS));
+
+      try {
+        const result = await getStatus({
+          txHash,
+          fromChain: fromChainId,
+          toChain: toChainId,
+          bridge,
+        });
+
+        console.log(
+          "[MaxYield] Transfer status:",
+          result.status,
+          result.substatus,
+        );
+
+        if (result.status === "DONE") {
+          onUpdate({
+            status: "completed",
+            message: "Cross-chain deposit completed successfully!",
+            txHash: (result as any).receiving?.txHash ?? txHash,
+          });
+          return;
+        }
+
+        if (result.status === "FAILED") {
+          const msg =
+            (result as any).substatusMessage || "Cross-chain transfer failed.";
+          onUpdate({ status: "failed", message: msg });
+          throw new Error(msg);
+        }
+
+        // Still in progress
+        onUpdate({
+          status: "bridging",
+          message:
+            (result as any).substatusMessage ||
+            "Cross-chain transfer in progress…",
+          txHash,
+        });
+      } catch (err: any) {
+        if (err?.message?.includes("failed")) throw err;
+        console.warn("[MaxYield] Status poll error (retrying):", err?.message);
+      }
+    }
+
+    onUpdate({
+      status: "failed",
+      message:
+        "Transfer monitoring timed out. Check your wallet for the final status.",
     });
   } catch (error: any) {
     console.error("[MaxYield] Cross-chain route error:", error);
     onUpdate({
       status: "failed",
-      message: error?.message ?? "Transaction failed. Please try again.",
+      message:
+        error?.shortMessage ??
+        error?.message ??
+        "Transaction failed. Please try again.",
     });
     throw error;
   }

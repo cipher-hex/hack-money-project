@@ -310,9 +310,13 @@ const MaxYieldPage: React.FC = () => {
           onUpdate,
         );
       } else {
-        // Cross-chain: LI.FI Composer
+        // Cross-chain: LI.FI Composer (manual execution)
+        if (!walletClient) {
+          onUpdate({ status: "failed", message: "Wallet not connected" });
+          return;
+        }
         console.log("[MaxYield] Executing cross-chain route via LI.FI…");
-        await executeComposerRoute(quoteResult.quote, onUpdate);
+        await executeComposerRoute(quoteResult.quote, walletClient, onUpdate);
       }
     } catch {
       // Error handled inside the execution callbacks
