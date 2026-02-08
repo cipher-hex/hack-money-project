@@ -86,14 +86,14 @@ Result: a safer, more forgiving, and universally compatible payment flow.
     - Native **ARC** tokens.
     - ERC‑20 tokens on ARC Testnet.
 
-### 2. 👥 Bulk Transaction Manager
+### 3. 👥 Bulk Transaction Manager
 
 - Create **bulk payouts** in one transaction:
   - Configure individual amounts per recipient.
   - Suitable for payroll, bounties, vendor payments, and airdrops.
 - Bulk transaction history to audit and review previous payouts.
 
-### 3. 🧾 Refund & History Layer
+### 4. 🧾 Refund & History Layer
 
 - View all:
   - **Pending** (escrowed, not yet claimed),
@@ -102,7 +102,7 @@ Result: a safer, more forgiving, and universally compatible payment flow.
 - Trigger refunds for unclaimed escrow payments via UI.
 - Clear, human-readable statuses for every transaction.
 
-### 4. 🔑 Authentication & UX
+### 5. 🔑 Authentication & UX
 
 - **Web3Auth** for:
   - Social logins (Google, Twitter, etc.),
@@ -290,18 +290,20 @@ src/artifacts/BulkTransactionManager.json
 
 ### SafePay (Escrow Contract)
 
-- **Address**: `0x5e6c03E14002aF759680cd86ad4534D4b8FA0648`
+- **Address**: `0xde97e0707A81600db65228e72dC0D8256C7DCe5B`
 - **Network**: `ARC Testnet`
-- **Deployed**: January 14, 2026
+- **Chain ID**: `5042002`
+- **Deployed**: February 05, 2026
 - **Tokens**:
   - Native: **ARC**
   - ERC‑20: Supported tokens on ARC Testnet
 
 ### BulkTransactionManager
 
-- **Address**: `0xd4DA259c0d1aae023B5F19254697f7C307af5aE5`
+- **Address**: `0xc45a643D84B8C3a79f9a9c09d886581E8ba03626`
 - **Network**: `ARC Testnet`
-- **Deployed**: January 14, 2026
+- **Chain ID**: `5042002`
+- **Deployed**: February 05, 2026
 
 These addresses are also configured in:
 
@@ -330,23 +332,12 @@ These addresses are also configured in:
 
 ## 🗺️ Future Roadmap
 
-- **Universal Payment Solution (Cross‑Chain, Any Token)**
-  - Allow users to **create and manage payment requests** with:
-    - Preferred blockchain (e.g. Mantle, EVM L2s, etc.),
-    - Preferred token (MNT, stablecoins, or ERC‑20s),
-    - Total amount to receive.
-  - Generate a **payment link** that can be shared with the payer.
-  - The receiver connects their wallet; if their funds are on **another chain or in another token**, the platform:
-    - Requests **allowance** on the payer's chosen token/chain,
-    - Automatically orchestrates **swap + bridge** steps behind the scenes,
-    - Delivers funds to the receiver in their **preferred token on their preferred blockchain**.
-  - Goal: make crypto payments feel like a single, universal payment network, regardless of where liquidity lives.
 - **Unified Balance System**
   - Show a **single aggregated balance view** across multiple chains and tokens.
   - Normalize balances into a common unit (e.g. USD equivalent) while still showing per‑asset details.
   - Power better UX for the universal payment solution and future cross‑chain features.
 - Better **UX messaging** around wrong-address mistakes and refund windows.
-- Additional **tokens** and **stablecoins** on Mantle.
+- Additional **tokens** and **stablecoins** on ARC Testnet.
 - **Fiat on‑ramp/off‑ramp** integration.
 - Bulk payout analytics & CSV export.
 
