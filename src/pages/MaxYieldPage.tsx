@@ -457,7 +457,7 @@ const MaxYieldPage: React.FC = () => {
                 <thead>
                   <tr className="border-b border-gray-100 text-left text-gray-500 font-medium">
                     <th className="pb-3 pr-4">#</th>
-                    <th className="pb-3 pr-4">Protocol</th>
+                    <th className="pb-3 pr-4">Pool / Vault</th>
                     <th className="pb-3 pr-4">Chain</th>
                     <th className="pb-3 pr-4 text-right">APY</th>
                     <th className="pb-3 pr-4 text-right">Base APY</th>
@@ -484,7 +484,7 @@ const MaxYieldPage: React.FC = () => {
                       <td className="py-4 pr-4">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-gray-800">
-                            {pool.protocolLabel}
+                            {pool.vaultName}
                           </span>
                           {pool.isBest && (
                             <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">
@@ -492,11 +492,6 @@ const MaxYieldPage: React.FC = () => {
                             </span>
                           )}
                         </div>
-                        {pool.poolMeta && (
-                          <span className="text-xs text-gray-400">
-                            {pool.poolMeta}
-                          </span>
-                        )}
                       </td>
                       <td className="py-4 pr-4">
                         <span className="font-medium text-gray-700">

@@ -110,6 +110,36 @@ export const SUPPORTED_CHAINS: Record<number, ChainConfig> = {
         vaultAddress: "0xBEEF01735c132Ada46AA9aA4c54623cAA92A64CB",
         asset: "USDC",
       },
+      {
+        name: "Steakhouse USDT",
+        vaultAddress: "0xbEef047a543E45807105E51A8BBEFCc5950fcfBa",
+        asset: "USDT",
+      },
+      {
+        name: "Gauntlet USDC Prime",
+        vaultAddress: "0xdd0f28e19C1780eb6396170735D45153D261490d",
+        asset: "USDC",
+      },
+      {
+        name: "Gauntlet USDC Core",
+        vaultAddress: "0x8eB67A509616cd6A7c1B3c8C21D48FF57df3d458",
+        asset: "USDC",
+      },
+      {
+        name: "Gauntlet USDC Flagship",
+        vaultAddress: "0xc582F04d8a82795aa2Ff9c8bb4c1c889fe7b754e",
+        asset: "USDC",
+      },
+      {
+        name: "Smokehouse USDC",
+        vaultAddress: "0xBEeFFF209270748ddd194831b3fa287a5386f5bC",
+        asset: "USDC",
+      },
+      {
+        name: "Gauntlet USDC RWA",
+        vaultAddress: "0xA8875aaeBc4f830524e35d57F9772FfAcbdD6C45",
+        asset: "USDC",
+      },
     ],
   },
 
@@ -131,6 +161,36 @@ export const SUPPORTED_CHAINS: Record<number, ChainConfig> = {
       {
         name: "Moonwell Flagship USDC",
         vaultAddress: "0xc1256Ae5FF1cf2719D4937adb3bbCCab2E00A2Ca",
+        asset: "USDC",
+      },
+      {
+        name: "Steakhouse USDC",
+        vaultAddress: "0xbeeF010f9cb27031ad51e3333f9aF9C6B1228183",
+        asset: "USDC",
+      },
+      {
+        name: "Steakhouse High Yield USDC",
+        vaultAddress: "0xCBeeF01994E24a60f7DCB8De98e75AD8BD4Ad60d",
+        asset: "USDC",
+      },
+      {
+        name: "Steakhouse USDC RWA",
+        vaultAddress: "0xbEefc4aDBE58173FCa2C042097Fe33095E68C3D6",
+        asset: "USDC",
+      },
+      {
+        name: "Steakhouse Prime USDC",
+        vaultAddress: "0xBEEFE94c8aD530842bfE7d8B397938fFc1cb83b2",
+        asset: "USDC",
+      },
+      {
+        name: "Gauntlet USDC Prime",
+        vaultAddress: "0xeE8F4eC5672F09119b96Ab6fB59C27E1b7e44b61",
+        asset: "USDC",
+      },
+      {
+        name: "Gauntlet USDC Core",
+        vaultAddress: "0xc0c5689e6f4D256E861F65465b691aeEcC0dEb12",
         asset: "USDC",
       },
     ],
@@ -155,7 +215,18 @@ export const SUPPORTED_CHAINS: Record<number, ChainConfig> = {
         decimals: 6,
       },
     },
-    morphoVaults: [],
+    morphoVaults: [
+      {
+        name: "Steakhouse High Yield USDC",
+        vaultAddress: "0x5c0C306Aaa9F877de636f4d5822cA9F2E81563BA",
+        asset: "USDC",
+      },
+      {
+        name: "Steakhouse Prime USDC",
+        vaultAddress: "0x250CF7c82bAc7cB6cf899b6052979d4B5BA1f9ca",
+        asset: "USDC",
+      },
+    ],
   },
 
   10: {

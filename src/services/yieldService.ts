@@ -14,6 +14,7 @@ export interface YieldPool {
   id: string;
   protocol: "aave-v3" | "morpho";
   protocolLabel: string;
+  vaultName: string;
   chain: string;
   chainId: number;
   symbol: string;
@@ -84,21 +85,36 @@ async function fetchAllPools(): Promise<DefiLlamaPool[]> {
 // Resolve the on-chain deposit address for a given pool
 // ---------------------------------------------------------------------------
 
+const ZERO_ADDRESS: Address = "0x0000000000000000000000000000000000000000";
+
 function resolvePoolAddress(pool: DefiLlamaPool, chainId: number): Address {
   const chainConfig = SUPPORTED_CHAINS[chainId];
-  if (!chainConfig) return "0x0000000000000000000000000000000000000000";
+  if (!chainConfig) return ZERO_ADDRESS;
 
   if (pool.project === "aave-v3") {
     return chainConfig.aaveV3Pool;
   }
 
-  // Morpho: try to match a hardcoded vault
+  // Morpho: match by vault name first, then fall back to asset-only match
   const asset = extractAssetSymbol(pool.symbol);
-  const vault = chainConfig.morphoVaults.find((v) => v.asset === asset);
-  if (vault) return vault.vaultAddress;
+  const readableName = VAULT_NAME_MAP[pool.symbol.toUpperCase()];
 
-  // Fallback – pool ID sometimes contains the vault address
-  return "0x0000000000000000000000000000000000000000";
+  if (readableName) {
+    // Try exact name match against our config
+    const byName = chainConfig.morphoVaults.find(
+      (v) => v.name === readableName && v.asset === asset,
+    );
+    if (byName) return byName.vaultAddress;
+  }
+
+  // Fallback: first vault matching the asset on this chain
+  const byAsset = chainConfig.morphoVaults.find((v) => v.asset === asset);
+  if (byAsset) return byAsset.vaultAddress;
+
+  console.warn(
+    `[MaxYield] No vault address for Morpho pool "${pool.symbol}" on chain ${chainId} — skipping`,
+  );
+  return ZERO_ADDRESS;
 }
 
 // ---------------------------------------------------------------------------
@@ -111,6 +127,61 @@ function extractAssetSymbol(symbol: string): SupportedAsset | null {
   if (upper.includes("USDC")) return "USDC";
   if (upper.includes("USDT")) return "USDT";
   return null;
+}
+
+// ---------------------------------------------------------------------------
+// Map DeFi Llama symbol to a human-readable vault/pool name
+// ---------------------------------------------------------------------------
+
+const VAULT_NAME_MAP: Record<string, string> = {
+  STEAKUSDC: "Steakhouse USDC",
+  STEAKUSDT: "Steakhouse USDT",
+  STEAKUSDTBETHENA: "Steakhouse USDT Ethena",
+  GTUSDCP: "Gauntlet USDC Prime",
+  GTUSDCF: "Gauntlet USDC Flagship",
+  GTUSDC: "Gauntlet USDC",
+  GTUSDTF: "Gauntlet USDT Flagship",
+  GTUSDCCORE: "Gauntlet USDC Core",
+  BBQUSDC: "BBQ USDC",
+  BBQUSDT: "BBQ USDT",
+  BBQUSDT0: "BBQ USDT",
+  VBGTUSDT: "Vault USDT",
+  SYRUPUSDC: "Syrup USDC",
+  SYRUPUSDT: "Syrup USDT",
+};
+
+function formatVaultName(
+  rawSymbol: string,
+  project: string,
+  asset: SupportedAsset,
+): string {
+  const upper = rawSymbol.toUpperCase();
+
+  // Aave V3: simple supply pool
+  if (project === "aave-v3") {
+    return `${asset} Supply (Aave V3)`;
+  }
+
+  // Morpho: try known vault names first
+  const known = VAULT_NAME_MAP[upper];
+  if (known) {
+    return `${known} (Morpho)`;
+  }
+
+  // Fallback: clean up the raw symbol into something readable
+  // e.g. "AA-FALCONXUSDC" → "Falcon X USDC"
+  let cleaned = rawSymbol
+    .replace(/USDC/gi, "")
+    .replace(/USDT/gi, "")
+    .replace(/^AA-/i, "")
+    .replace(/[_-]/g, " ")
+    .trim();
+
+  if (cleaned.length === 0) {
+    cleaned = rawSymbol;
+  }
+
+  return `${cleaned} ${asset} (Morpho)`;
 }
 
 // ---------------------------------------------------------------------------
@@ -152,26 +223,36 @@ export async function fetchYieldPools(
     return true;
   });
 
-  // Map to our YieldPool type
-  const pools: YieldPool[] = filtered.map((p) => {
-    const chainId = DEFI_LLAMA_CHAIN_MAP[p.chain];
-    return {
-      id: p.pool,
-      protocol: PROTOCOL_KEY_MAP[p.project] ?? "aave-v3",
-      protocolLabel: PROTOCOL_LABEL_MAP[p.project] ?? p.project,
-      chain: p.chain,
-      chainId,
-      symbol: p.symbol,
-      asset,
-      apy: roundTo(p.apy, 2),
-      apyBase: roundTo(p.apyBase ?? 0, 2),
-      apyReward: roundTo(p.apyReward ?? 0, 2),
-      tvlUsd: p.tvlUsd,
-      poolAddress: resolvePoolAddress(p, chainId),
-      poolMeta: p.poolMeta,
-      isBest: false,
-    };
-  });
+  // Map to our YieldPool type, filtering out Morpho pools with no vault address
+  const pools: YieldPool[] = filtered
+    .map((p) => {
+      const chainId = DEFI_LLAMA_CHAIN_MAP[p.chain];
+      const poolAddress = resolvePoolAddress(p, chainId);
+      return {
+        id: p.pool,
+        protocol: PROTOCOL_KEY_MAP[p.project] ?? ("aave-v3" as const),
+        protocolLabel: PROTOCOL_LABEL_MAP[p.project] ?? p.project,
+        vaultName: formatVaultName(p.symbol, p.project, asset),
+        chain: p.chain,
+        chainId,
+        symbol: p.symbol,
+        asset,
+        apy: roundTo(p.apy, 2),
+        apyBase: roundTo(p.apyBase ?? 0, 2),
+        apyReward: roundTo(p.apyReward ?? 0, 2),
+        tvlUsd: p.tvlUsd,
+        poolAddress,
+        poolMeta: p.poolMeta,
+        isBest: false,
+      };
+    })
+    .filter((p) => {
+      // Remove Morpho pools whose vault address could not be resolved
+      if (p.protocol === "morpho" && p.poolAddress === ZERO_ADDRESS) {
+        return false;
+      }
+      return true;
+    });
 
   // Sort by APY descending
   pools.sort((a, b) => b.apy - a.apy);
