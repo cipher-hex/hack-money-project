@@ -78,18 +78,10 @@ const MainHeader: React.FC = () => {
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
               <CurrencyDollarIcon className="w-6 h-6 text-white" />
             </div>
-            <div className="hidden sm:block">
-              <h1 className="text-xl font-bold text-gray-900">
-                SafeWallet Pay
-              </h1>
-              <p className="text-xs text-blue-600">
-                Secure • Fast • Decentralized
-              </p>
-            </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
+          <nav className="hidden md:flex space-x-4">
             {navItems.map((item) => (
               <Link
                 key={item.href}
