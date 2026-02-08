@@ -5,6 +5,7 @@ import {
   SUPPORTED_CHAIN_IDS,
   type SupportedAsset,
 } from "../config/yieldConfig";
+import { fetchAaveYieldPools } from "./aaveService";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -47,15 +48,14 @@ interface DefiLlamaPool {
 
 const DEFI_LLAMA_POOLS_URL = "https://yields.llama.fi/pools";
 
-const PROJECT_FILTER = new Set(["aave-v3", "morpho-v1"]);
+// Only fetch Morpho from DeFi Llama (Aave V3 comes from aaveService)
+const PROJECT_FILTER = new Set(["morpho-v1"]);
 
 const PROTOCOL_LABEL_MAP: Record<string, string> = {
-  "aave-v3": "Aave V3",
   "morpho-v1": "Morpho",
 };
 
 const PROTOCOL_KEY_MAP: Record<string, YieldPool["protocol"]> = {
-  "aave-v3": "aave-v3",
   "morpho-v1": "morpho",
 };
 
@@ -191,12 +191,46 @@ function formatVaultName(
 export async function fetchYieldPools(
   asset: SupportedAsset,
 ): Promise<YieldPool[]> {
+  // Fetch Aave V3 (official GraphQL) and Morpho (DeFi Llama) in parallel
+  const [aavePools, morphoPools] = await Promise.all([
+    fetchAaveYieldPools(asset).catch((err) => {
+      console.error(
+        "[MaxYield] Aave API fetch failed, falling back to empty:",
+        err,
+      );
+      return [] as YieldPool[];
+    }),
+    fetchMorphoPools(asset),
+  ]);
+
+  // Merge both sources
+  const pools = [...aavePools, ...morphoPools];
+
+  // Sort by APY descending
+  pools.sort((a, b) => b.apy - a.apy);
+
+  // Mark the best pool
+  if (pools.length > 0) {
+    pools[0].isBest = true;
+  }
+
+  console.log(
+    `[MaxYield] Total pools: ${pools.length} (Aave: ${aavePools.length}, Morpho: ${morphoPools.length})`,
+  );
+  return pools;
+}
+
+// ---------------------------------------------------------------------------
+// Fetch Morpho pools from DeFi Llama
+// ---------------------------------------------------------------------------
+
+async function fetchMorphoPools(asset: SupportedAsset): Promise<YieldPool[]> {
   const allPools = await fetchAllPools();
 
   const supportedChainNames = new Set(Object.keys(DEFI_LLAMA_CHAIN_MAP));
 
   const filtered = allPools.filter((p) => {
-    // Must be a supported protocol
+    // Must be a supported protocol (Morpho only)
     if (!PROJECT_FILTER.has(p.project)) return false;
 
     // Must be on a supported chain
@@ -223,14 +257,14 @@ export async function fetchYieldPools(
     return true;
   });
 
-  // Map to our YieldPool type, filtering out Morpho pools with no vault address
-  const pools: YieldPool[] = filtered
+  // Map to our YieldPool type, filtering out pools with no vault address
+  return filtered
     .map((p) => {
       const chainId = DEFI_LLAMA_CHAIN_MAP[p.chain];
       const poolAddress = resolvePoolAddress(p, chainId);
       return {
         id: p.pool,
-        protocol: PROTOCOL_KEY_MAP[p.project] ?? ("aave-v3" as const),
+        protocol: PROTOCOL_KEY_MAP[p.project] ?? ("morpho" as const),
         protocolLabel: PROTOCOL_LABEL_MAP[p.project] ?? p.project,
         vaultName: formatVaultName(p.symbol, p.project, asset),
         chain: p.chain,
@@ -246,23 +280,7 @@ export async function fetchYieldPools(
         isBest: false,
       };
     })
-    .filter((p) => {
-      // Remove Morpho pools whose vault address could not be resolved
-      if (p.protocol === "morpho" && p.poolAddress === ZERO_ADDRESS) {
-        return false;
-      }
-      return true;
-    });
-
-  // Sort by APY descending
-  pools.sort((a, b) => b.apy - a.apy);
-
-  // Mark the best pool
-  if (pools.length > 0) {
-    pools[0].isBest = true;
-  }
-
-  return pools;
+    .filter((p) => p.poolAddress !== ZERO_ADDRESS);
 }
 
 // ---------------------------------------------------------------------------
