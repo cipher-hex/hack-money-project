@@ -77,40 +77,44 @@ export default function TokenSelector({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-left shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-          disabled ? "opacity-50 cursor-not-allowed" : "hover:border-gray-400"
+        className={`w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-left shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 ${
+          disabled
+            ? "opacity-50 cursor-not-allowed"
+            : "hover:border-blue-300 hover:bg-gray-50/50"
         }`}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             {/* Token Icon Placeholder */}
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm ${
-                selectedToken.isNative ? "bg-blue-500" : "bg-green-500"
+              className={`w-9 h-9 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-sm ${
+                selectedToken.isNative ? "bg-blue-600" : "bg-emerald-500"
               }`}
             >
               {selectedToken.token.symbol.substring(0, 2)}
             </div>
 
             <div>
-              <div className="font-medium text-gray-900">
+              <div className="font-semibold text-gray-900">
                 {selectedToken.token.symbol}
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-xs text-gray-500">
                 {selectedToken.token.name}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3">
             {address && (
-              <div className="text-sm text-gray-600">{getCurrentBalance()}</div>
+              <div className="text-sm font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-lg">
+                {getCurrentBalance()}
+              </div>
             )}
             {!disabled &&
               (isOpen ? (
-                <ChevronUpIcon className="w-5 h-5" />
+                <ChevronUpIcon className="w-4 h-4 text-gray-400" />
               ) : (
-                <ChevronDownIcon className="w-5 h-5" />
+                <ChevronDownIcon className="w-4 h-4 text-gray-400" />
               ))}
           </div>
         </div>
@@ -118,35 +122,39 @@ export default function TokenSelector({
 
       {/* Dropdown Menu */}
       {isOpen && !disabled && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
-          <div className="py-1 max-h-60 overflow-auto">
+        <div className="absolute z-10 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+          <div className="py-1 max-h-64 overflow-auto">
             {availableTokens.map((tokenOption, index) => (
               <button
                 key={`${tokenOption.token.address}-${index}`}
                 onClick={() => handleTokenSelect(tokenOption)}
-                className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
+                className={`w-full px-4 py-3 text-left transition-colors duration-150 border-b border-gray-50 last:border-0 ${
+                  selectedToken.token.address === tokenOption.token.address
+                    ? "bg-blue-50/50"
+                    : "hover:bg-gray-50"
+                }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     {/* Token Icon */}
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm ${
-                        tokenOption.isNative ? "bg-blue-500" : "bg-green-500"
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-xs ${
+                        tokenOption.isNative ? "bg-blue-600" : "bg-emerald-500"
                       }`}
                     >
                       {tokenOption.token.symbol.substring(0, 2)}
                     </div>
 
                     <div>
-                      <div className="font-medium text-gray-900">
+                      <div className="font-medium text-gray-900 flex items-center">
                         {tokenOption.token.symbol}
                         {tokenOption.isNative && (
-                          <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                          <span className="ml-2 text-[10px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full uppercase tracking-wide">
                             Native
                           </span>
                         )}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-xs text-gray-500">
                         {tokenOption.token.name}
                       </div>
                     </div>
@@ -155,7 +163,7 @@ export default function TokenSelector({
                   {/* Show selected indicator */}
                   {selectedToken.token.address ===
                     tokenOption.token.address && (
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <div className="w-2 h-2 bg-blue-600 rounded-full shadow-sm"></div>
                   )}
                 </div>
               </button>

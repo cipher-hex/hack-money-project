@@ -46,7 +46,7 @@ const BulkTransactionPage: React.FC = () => {
   const [editingRecipient, setEditingRecipient] = useState<any>(null);
   const [showTransferForm, setShowTransferForm] = useState(false);
   const [activeTab, setActiveTab] = useState<"recipients" | "history">(
-    "recipients"
+    "recipients",
   );
 
   // Handle add recipient
@@ -89,7 +89,7 @@ const BulkTransactionPage: React.FC = () => {
   const handleBulkTransfer = async (
     recipientsWithAmounts: RecipientWithAmount[],
     tokenAddress?: string,
-    decimals: number = 18
+    decimals: number = 18,
   ) => {
     const recipientIds = recipientsWithAmounts.map((r) => r.id!);
     const amounts = recipientsWithAmounts.map((r) => r.amount);
@@ -116,16 +116,33 @@ const BulkTransactionPage: React.FC = () => {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
-            <UserGroupIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-semibold text-gray-700 mb-2">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50">
+        <MainHeader />
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="text-center mb-10">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-3">
+              Bulk Transaction Manager
+            </h1>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Manage recipients and send bulk payments efficiently.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center max-w-lg mx-auto">
+            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <UserGroupIcon className="w-10 h-10 text-blue-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">
               Connect Your Wallet
             </h2>
-            <p className="text-gray-500">
-              Please connect your wallet to manage bulk transactions
+            <p className="text-gray-500 mb-8">
+              Please connect your wallet to start managing recipients and
+              sending bulk transactions.
             </p>
+            {/* The header handles connection, but we can guide them */}
+            <div className="text-sm text-blue-600 font-medium">
+              Use the "Connect Wallet" button in the header ↗
+            </div>
           </div>
         </div>
       </div>
@@ -134,14 +151,12 @@ const BulkTransactionPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50">
-      {" "}
-      {/* Header */}
       <MainHeader />
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <div className="flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 flex items-center space-x-3">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent flex items-center space-x-3">
                 <UserGroupIcon className="w-8 h-8 text-blue-600" />
                 <span>Bulk Transaction Manager</span>
               </h1>
@@ -152,7 +167,7 @@ const BulkTransactionPage: React.FC = () => {
             <div className="flex space-x-3">
               <button
                 onClick={() => setShowAddRecipient(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors duration-200"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium flex items-center space-x-2 transition-all duration-200 shadow-md hover:shadow-lg"
               >
                 <PlusIcon className="w-5 h-5" />
                 <span>Add Recipient</span>
@@ -160,7 +175,7 @@ const BulkTransactionPage: React.FC = () => {
               {selectedRecipients.length > 0 && (
                 <button
                   onClick={() => setShowTransferForm(true)}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors duration-200"
+                  className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl font-medium flex items-center space-x-2 transition-all duration-200 shadow-md hover:shadow-lg"
                 >
                   <PaperAirplaneIcon className="w-5 h-5" />
                   <span>Bulk Send ({selectedRecipients.length})</span>

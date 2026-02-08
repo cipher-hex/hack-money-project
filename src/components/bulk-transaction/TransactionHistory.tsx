@@ -45,7 +45,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     }
 
     const token = chainConfig.supportedTokens?.find(
-      (t) => t.address.toLowerCase() === transaction.tokenAddress.toLowerCase()
+      (t) => t.address.toLowerCase() === transaction.tokenAddress.toLowerCase(),
     );
     return token?.symbol || "TOKEN";
   };
@@ -78,34 +78,35 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.05 }}
-          className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors duration-200"
+          className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <PaperAirplaneIcon className="w-5 h-5 text-blue-600" />
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-blue-50 rounded-xl">
+                  <PaperAirplaneIcon className="w-6 h-6 text-blue-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">
+                  <p className="font-semibold text-gray-900 text-lg">
                     Bulk Transfer to {transaction.recipientCount} Recipients
                   </p>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-gray-500 mt-0.5 flex items-center">
+                    <ClockIcon className="w-3.5 h-3.5 mr-1" />
                     {formatDate(transaction.timestamp)}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-3 flex items-center space-x-6 text-sm">
-                <div className="flex items-center space-x-1">
-                  <UserGroupIcon className="w-4 h-4 text-gray-400" />
-                  <span className="text-gray-600">
+              <div className="mt-4 flex flex-wrap gap-4 text-sm">
+                <div className="flex items-center px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
+                  <UserGroupIcon className="w-4 h-4 text-gray-400 mr-2" />
+                  <span className="text-gray-700 font-medium">
                     {transaction.recipientCount} recipients
                   </span>
                 </div>
-                <div className="flex items-center space-x-1">
-                  <CurrencyDollarIcon className="w-4 h-4 text-gray-400" />
-                  <span className="text-gray-600">
+                <div className="flex items-center px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
+                  <CurrencyDollarIcon className="w-4 h-4 text-gray-400 mr-2" />
+                  <span className="text-gray-700 font-medium">
                     {formatAmount(transaction.totalAmount)}{" "}
                     {getTokenSymbol(transaction)}
                   </span>
@@ -113,8 +114,8 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                 {!transaction.isNative &&
                   transaction.tokenAddress !==
                     "0x0000000000000000000000000000000000000000" && (
-                    <div className="flex items-center space-x-1">
-                      <span className="text-gray-500">Token:</span>
+                    <div className="flex items-center px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
+                      <span className="text-gray-500 mr-2">Token:</span>
                       <span className="text-gray-600 font-mono text-xs">
                         {formatAddress(transaction.tokenAddress)}
                       </span>
@@ -124,12 +125,14 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             </div>
 
             <div className="text-right">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-100">
                 Completed
               </span>
-              <p className="text-sm font-medium text-gray-900 mt-2">
+              <p className="text-lg font-bold text-gray-900 mt-2">
                 {formatAmount(transaction.totalAmount)}{" "}
-                {getTokenSymbol(transaction)}
+                <span className="text-sm font-medium text-gray-500">
+                  {getTokenSymbol(transaction)}
+                </span>
               </p>
             </div>
           </div>

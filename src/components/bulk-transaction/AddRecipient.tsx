@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
-import { RecipientFormData, Recipient } from '../../types/bulk-transaction';
-import { validateRecipientForm } from '../../utils/bulk-transaction/validation';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { XMarkIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { RecipientFormData, Recipient } from "../../types/bulk-transaction";
+import { validateRecipientForm } from "../../utils/bulk-transaction/validation";
 
 interface AddRecipientProps {
   isOpen: boolean;
@@ -20,13 +20,13 @@ const AddRecipient: React.FC<AddRecipientProps> = ({
   isLoading = false,
 }) => {
   const [formData, setFormData] = useState<RecipientFormData>({
-    walletAddress: '',
-    relation: '',
-    fullName: '',
-    userId: '',
+    walletAddress: "",
+    relation: "",
+    fullName: "",
+    userId: "",
   });
 
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
 
   // Populate form when editing
   useEffect(() => {
@@ -35,23 +35,23 @@ const AddRecipient: React.FC<AddRecipientProps> = ({
         walletAddress: editingRecipient.walletAddress,
         relation: editingRecipient.relation,
         fullName: editingRecipient.fullName,
-        userId: editingRecipient.userId || '',
+        userId: editingRecipient.userId || "",
       });
     } else {
       // Reset form when adding new
       setFormData({
-        walletAddress: '',
-        relation: '',
-        fullName: '',
-        userId: '',
+        walletAddress: "",
+        relation: "",
+        fullName: "",
+        userId: "",
       });
     }
-    setError('');
+    setError("");
   }, [editingRecipient, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     // Validate form
     const validationError = validateRecipientForm(formData);
@@ -64,7 +64,7 @@ const AddRecipient: React.FC<AddRecipientProps> = ({
       await onSubmit(formData);
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to save recipient');
+      setError(err.message || "Failed to save recipient");
     }
   };
 
@@ -89,7 +89,7 @@ const AddRecipient: React.FC<AddRecipientProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-800">
-              {editingRecipient ? 'Edit Recipient' : 'Add New Recipient'}
+              {editingRecipient ? "Edit Recipient" : "Add New Recipient"}
             </h2>
             <button
               onClick={onClose}
@@ -100,17 +100,19 @@ const AddRecipient: React.FC<AddRecipientProps> = ({
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Wallet Address */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Wallet Address *
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Wallet Address <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={formData.walletAddress}
-                onChange={(e) => setFormData({ ...formData, walletAddress: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(e) =>
+                  setFormData({ ...formData, walletAddress: e.target.value })
+                }
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white"
                 placeholder="0x..."
                 required
                 disabled={isLoading}
@@ -119,14 +121,16 @@ const AddRecipient: React.FC<AddRecipientProps> = ({
 
             {/* Full Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name *
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Full Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={formData.fullName}
-                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(e) =>
+                  setFormData({ ...formData, fullName: e.target.value })
+                }
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white"
                 placeholder="John Doe"
                 required
                 disabled={isLoading}
@@ -135,37 +139,59 @@ const AddRecipient: React.FC<AddRecipientProps> = ({
 
             {/* Relation */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Relation *
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Relation <span className="text-red-500">*</span>
               </label>
-              <select
-                value={formData.relation}
-                onChange={(e) => setFormData({ ...formData, relation: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-                disabled={isLoading}
-              >
-                <option value="">Select relation</option>
-                <option value="Family">Family</option>
-                <option value="Friend">Friend</option>
-                <option value="Business Partner">Business Partner</option>
-                <option value="Employee">Employee</option>
-                <option value="Client">Client</option>
-                <option value="Vendor">Vendor</option>
-                <option value="Other">Other</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={formData.relation}
+                  onChange={(e) =>
+                    setFormData({ ...formData, relation: e.target.value })
+                  }
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white appearance-none"
+                  required
+                  disabled={isLoading}
+                >
+                  <option value="">Select relation</option>
+                  <option value="Family">Family</option>
+                  <option value="Friend">Friend</option>
+                  <option value="Business Partner">Business Partner</option>
+                  <option value="Employee">Employee</option>
+                  <option value="Client">Client</option>
+                  <option value="Vendor">Vendor</option>
+                  <option value="Other">Other</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
+                  <svg
+                    className="w-4 h-4 text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </div>
+              </div>
             </div>
 
             {/* User ID (Optional) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                User ID (Optional)
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                User ID{" "}
+                <span className="text-gray-400 font-normal">(Optional)</span>
               </label>
               <input
                 type="text"
                 value={formData.userId}
-                onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(e) =>
+                  setFormData({ ...formData, userId: e.target.value })
+                }
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white"
                 placeholder="@username or ID"
                 disabled={isLoading}
               />
@@ -176,25 +202,38 @@ const AddRecipient: React.FC<AddRecipientProps> = ({
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm"
+                className="p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm flex items-start space-x-2"
               >
-                {error}
+                <svg
+                  className="w-5 h-5 flex-shrink-0 mt-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span>{error}</span>
               </motion.div>
             )}
 
             {/* Buttons */}
-            <div className="flex space-x-3 pt-2">
+            <div className="flex space-x-3 pt-4">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200"
+                className="flex-1 px-4 py-3.5 border border-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
                 disabled={isLoading}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-3.5 rounded-xl font-semibold flex items-center justify-center space-x-2 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-blue-200"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -203,7 +242,7 @@ const AddRecipient: React.FC<AddRecipientProps> = ({
                     <span>Processing...</span>
                   </>
                 ) : (
-                  <span>{editingRecipient ? 'Update' : 'Add'} Recipient</span>
+                  <span>{editingRecipient ? "Update" : "Add"} Recipient</span>
                 )}
               </button>
             </div>

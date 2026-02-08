@@ -27,7 +27,7 @@ interface BulkTransferFormProps {
   onSubmit: (
     recipients: RecipientWithAmount[],
     tokenAddress?: string,
-    decimals?: number
+    decimals?: number,
   ) => Promise<void>;
   isLoading?: boolean;
   address?: string;
@@ -56,7 +56,7 @@ const BulkTransferForm: React.FC<BulkTransferFormProps> = ({
   // Get BulkTransactionManager contract address for current chain
   const getBulkTransactionContractAddress = (): string | undefined => {
     const deployment = bulkTransactionAddresses.find(
-      (d) => d.chainId === chainId.toString()
+      (d) => d.chainId === chainId.toString(),
     );
     return deployment?.contractAddress;
   };
@@ -122,7 +122,7 @@ const BulkTransferForm: React.FC<BulkTransferFormProps> = ({
     }
 
     const equalAmount = (parseFloat(totalAmount) / recipients.length).toFixed(
-      6
+      6,
     );
     const newRecipients = recipientsWithAmounts.map((r) => ({
       ...r,
@@ -189,7 +189,7 @@ const BulkTransferForm: React.FC<BulkTransferFormProps> = ({
         transactionType.isNativeTransaction
           ? undefined
           : selectedToken?.token.address,
-        selectedToken?.token.decimals
+        selectedToken?.token.decimals,
       );
       onClose();
     } catch (err: any) {
@@ -211,69 +211,92 @@ const BulkTransferForm: React.FC<BulkTransferFormProps> = ({
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-4xl max-h-[80vh] mx-4 overflow-hidden flex flex-col"
+          className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[85vh] mx-4 overflow-hidden flex flex-col border border-gray-100"
         >
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">
-              Bulk Transfer - {recipients.length} Recipients
-            </h2>
+          <div className="flex items-center justify-between p-6 border-b border-gray-100">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Bulk Transfer</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Sending to{" "}
+                <span className="font-semibold text-blue-600">
+                  {recipients.length}
+                </span>{" "}
+                recipients
+              </p>
+            </div>
             <button
               onClick={onClose}
-              className="p-1 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              className="p-2 hover:bg-gray-100 rounded-xl transition-colors duration-200 text-gray-400 hover:text-gray-600"
             >
-              <XMarkIcon className="w-6 h-6 text-gray-500" />
+              <XMarkIcon className="w-6 h-6" />
             </button>
           </div>
 
-          {/* Token Selection */}
-          <div className="mb-4">
-            <TokenSelector
-              onTokenSelect={(token: TokenSelection) => {
-                selectToken(token);
-                setFormError("");
-                setNeedsApproval(false);
-              }}
-              address={address}
-            />
-          </div>
+          <div className="flex-1 overflow-hidden flex flex-col p-6">
+            {/* Token Selection */}
+            <div className="mb-6">
+              <TokenSelector
+                onTokenSelect={(token: TokenSelection) => {
+                  selectToken(token);
+                  setFormError("");
+                  setNeedsApproval(false);
+                }}
+                address={address}
+              />
+            </div>
 
-          {/* Form */}
-          <form
-            onSubmit={handleSubmit}
-            className="flex-1 overflow-hidden flex flex-col"
-          >
-            {/* Recipients List with Amounts */}
-            <div className="flex-1 overflow-y-auto mb-4">
-              <div className="space-y-3">
+            {/* Form */}
+            <form
+              onSubmit={handleSubmit}
+              className="flex-1 overflow-hidden flex flex-col min-h-0"
+            >
+              {/* Recipients List with Amounts */}
+              <div className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-3 mb-6">
                 {recipientsWithAmounts.map((recipient, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">
-                          {recipient.fullName}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {formatAddress(recipient.walletAddress)} •{" "}
-                          {recipient.relation}
+                  <div
+                    key={index}
+                    className="bg-gray-50 rounded-xl p-4 border border-gray-100 transition-colors hover:border-blue-200"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-semibold text-gray-900 truncate">
+                            {recipient.fullName}
+                          </p>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700">
+                            {recipient.relation}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 font-mono truncate">
+                          {formatAddress(recipient.walletAddress)}
                         </p>
                       </div>
-                      <div className="w-48 ml-4">
-                        <input
-                          type="number"
-                          value={recipient.amount}
-                          onChange={(e) =>
-                            handleAmountChange(index, e.target.value)
-                          }
-                          className={`w-full px-3 py-2 rounded-lg border ${
-                            errors[index] ? "border-red-300" : "border-gray-300"
-                          } text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                          placeholder="0.0"
-                          step="0.000000000000000001"
-                          disabled={isLoading}
-                        />
+                      <div className="w-48 flex-shrink-0">
+                        <div className="relative">
+                          <input
+                            type="number"
+                            value={recipient.amount}
+                            onChange={(e) =>
+                              handleAmountChange(index, e.target.value)
+                            }
+                            className={`w-full px-4 py-2.5 rounded-xl border ${
+                              errors[index]
+                                ? "border-red-300 focus:ring-red-200"
+                                : "border-gray-200 focus:ring-blue-500/20 focus:border-blue-500"
+                            } text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 bg-white transition-all duration-200`}
+                            placeholder="0.00"
+                            step="0.000000000000000001"
+                            disabled={isLoading}
+                          />
+                          <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                            <span className="text-xs font-semibold text-gray-400">
+                              {selectedToken?.token.symbol || "ETH"}
+                            </span>
+                          </div>
+                        </div>
                         {errors[index] && (
-                          <p className="text-xs text-red-600 mt-1">
+                          <p className="text-xs text-red-600 mt-1 ml-1">
                             {errors[index]}
                           </p>
                         )}
@@ -282,48 +305,52 @@ const BulkTransferForm: React.FC<BulkTransferFormProps> = ({
                   </div>
                 ))}
               </div>
-            </div>
 
-            {/* Summary and Actions */}
-            <div className="border-t pt-4 space-y-4">
-              {/* Total and Distribute Button */}
-              <div className="flex items-center justify-between bg-blue-50 rounded-lg p-4">
-                <div>
-                  <p className="text-sm text-gray-600">Total Amount</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatAmount(totalAmount)}{" "}
-                    {transactionType.getTokenSymbol()}
-                  </p>
+              {/* Summary and Actions */}
+              <div className="border-t border-gray-100 pt-6 space-y-6">
+                {/* Total and Distribute Button */}
+                <div className="flex items-center justify-between bg-blue-50 rounded-xl p-5 border border-blue-100">
+                  <div>
+                    <p className="text-sm font-medium text-blue-600 mb-1">
+                      Total Amount to Send
+                    </p>
+                    <p className="text-2xl font-bold text-blue-900 tracking-tight">
+                      {formatAmount(totalAmount)}{" "}
+                      <span className="text-lg font-semibold text-blue-700">
+                        {transactionType.getTokenSymbol()}
+                      </span>
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleDistributeEqually}
+                    className="px-4 py-2.5 bg-white border border-blue-200 text-blue-600 rounded-xl text-sm font-semibold hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 shadow-sm"
+                    disabled={isLoading}
+                  >
+                    Distribute Equally
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleDistributeEqually}
-                  className="px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors duration-200"
-                  disabled={isLoading}
-                >
-                  Distribute Equally
-                </button>
-              </div>
 
-              {/* Approval Section for ERC20 */}
-              {transactionType.isERC20Transaction && needsApproval && (
-                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
-                  <div className="flex items-start space-x-3">
-                    <ExclamationTriangleIcon className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" />
+                {/* Approval Section for ERC20 */}
+                {transactionType.isERC20Transaction && needsApproval && (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-start gap-3">
+                    <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <h3 className="text-sm font-medium text-yellow-800">
+                      <h3 className="text-sm font-semibold text-yellow-800">
                         Token Approval Required
                       </h3>
-                      <p className="text-sm text-yellow-700 mt-1">
-                        Approve the contract to spend{" "}
-                        {formatAmount(totalAmount)}{" "}
-                        {selectedToken?.token.symbol}
+                      <p className="text-sm text-yellow-700 mt-1 mb-3">
+                        You need to approve the contract to spend{" "}
+                        <span className="font-medium">
+                          {formatAmount(totalAmount)}{" "}
+                          {selectedToken?.token.symbol}
+                        </span>
                       </p>
                       <button
                         type="button"
                         onClick={handleApproval}
                         disabled={isApproving}
-                        className="mt-3 bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                        className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 shadow-sm"
                       >
                         {isApproving ? (
                           <>
@@ -339,53 +366,54 @@ const BulkTransferForm: React.FC<BulkTransferFormProps> = ({
                       </button>
                     </div>
                   </div>
+                )}
+
+                {/* Error Message */}
+                {formError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm flex items-center gap-2"
+                  >
+                    <ExclamationTriangleIcon className="w-5 h-5 flex-shrink-0" />
+                    <span>{formError}</span>
+                  </motion.div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="flex-1 px-6 py-3.5 border border-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-[2] bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3.5 rounded-xl font-semibold flex items-center justify-center space-x-2 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-blue-200"
+                    disabled={
+                      isLoading ||
+                      (transactionType.isERC20Transaction && needsApproval)
+                    }
+                  >
+                    {isLoading ? (
+                      <>
+                        <ArrowPathIcon className="w-5 h-5 animate-spin" />
+                        <span>Processing Transaction...</span>
+                      </>
+                    ) : (
+                      <>
+                        <PaperAirplaneIcon className="w-5 h-5" />
+                        <span>Send to {recipients.length} Recipients</span>
+                      </>
+                    )}
+                  </button>
                 </div>
-              )}
-
-              {/* Error Message */}
-              {formError && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700"
-                >
-                  {formError}
-                </motion.div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex space-x-3">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200"
-                  disabled={isLoading}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                  disabled={
-                    isLoading ||
-                    (transactionType.isERC20Transaction && needsApproval)
-                  }
-                >
-                  {isLoading ? (
-                    <>
-                      <ArrowPathIcon className="w-5 h-5 animate-spin" />
-                      <span>Processing...</span>
-                    </>
-                  ) : (
-                    <>
-                      <PaperAirplaneIcon className="w-5 h-5" />
-                      <span>Send to All Recipients</span>
-                    </>
-                  )}
-                </button>
               </div>
-            </div>
-          </form>
+            </form>
+          </div>
         </motion.div>
       </motion.div>
     </AnimatePresence>
