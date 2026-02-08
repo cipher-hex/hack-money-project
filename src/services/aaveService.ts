@@ -105,7 +105,8 @@ export async function fetchAaveYieldPools(
   const allPools: YieldPool[] = [];
 
   for (const market of json.data.markets) {
-    const chainId = market.chain.chainId ?? AAVE_CHAIN_NAME_MAP[market.chain.name];
+    const chainId =
+      market.chain.chainId ?? AAVE_CHAIN_NAME_MAP[market.chain.name];
     if (!chainId || !SUPPORTED_CHAIN_IDS.includes(chainId)) continue;
 
     const chainConfig = SUPPORTED_CHAINS[chainId];
@@ -145,12 +146,16 @@ export async function fetchAaveYieldPools(
         tvlUsd,
         poolAddress: chainConfig.aaveV3Pool as Address,
         poolMeta: null,
+        poolId: `aave-v3-${chainId}-${poolAsset}`,
+        predictions: null,
         isBest: false,
       });
     }
   }
 
-  console.log(`[MaxYield] Aave V3: fetched ${allPools.length} pools across all chains`);
+  console.log(
+    `[MaxYield] Aave V3: fetched ${allPools.length} pools across all chains`,
+  );
 
   // Cache all pools (both USDC and USDT)
   _aaveCache = { pools: allPools, ts: Date.now() };

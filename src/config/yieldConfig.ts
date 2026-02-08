@@ -25,6 +25,7 @@ export interface MorphoVaultConfig {
   name: string;
   vaultAddress: Address;
   asset: string; // "USDC" | "USDT"
+  poolId?: string; // DeFi Llama pool UUID for exact matching
 }
 
 // ---------------------------------------------------------------------------
@@ -106,39 +107,34 @@ export const SUPPORTED_CHAINS: Record<number, ChainConfig> = {
     },
     morphoVaults: [
       {
-        name: "Steakhouse USDC",
-        vaultAddress: "0xBEEF01735c132Ada46AA9aA4c54623cAA92A64CB",
+        name: "ReEcosystem Vault",
+        vaultAddress: "0xD1E9242e075Db4bdd3f3c721D7d5fd4180A94A7e",
         asset: "USDC",
+        poolId: "ab979dd7-f3bd-4dc7-a95d-cabdea1bf059",
       },
       {
-        name: "Steakhouse USDT",
-        vaultAddress: "0xbEef047a543E45807105E51A8BBEFCc5950fcfBa",
+        name: "Gauntlet USDT Frontier",
+        vaultAddress: "0x79FD640000F8563A866322483524a4b48f1Ed702",
         asset: "USDT",
+        poolId: "0f25159f-753d-4eef-84f5-1f9b47394033",
       },
       {
-        name: "Gauntlet USDC Prime",
-        vaultAddress: "0xdd0f28e19C1780eb6396170735D45153D261490d",
+        name: "AlphaPing PT Frontier",
+        vaultAddress: "0x6701957aaA39e9352a42729Cc65436a4C945cB90",
         asset: "USDC",
+        poolId: "90468580-8c04-4cba-93ef-c686f06d91a3",
+      },
+     {
+        name: "ReEcosystem Ultra Vault",
+        vaultAddress: "0xD1E9242e075Db4bdd3f3c721D7d5fd4180A94A7e",
+        asset: "USDC",
+        poolId: "935fb02d-9645-4d46-85e0-5504bd01ef80",
       },
       {
-        name: "Gauntlet USDC Core",
-        vaultAddress: "0x8eB67A509616cd6A7c1B3c8C21D48FF57df3d458",
+        name: "Steakhouse Reservoir USDC",
+        vaultAddress: "0xbeEF346d7099865208Ff331e4f648f4154DDAa05",
         asset: "USDC",
-      },
-      {
-        name: "Gauntlet USDC Flagship",
-        vaultAddress: "0xc582F04d8a82795aa2Ff9c8bb4c1c889fe7b754e",
-        asset: "USDC",
-      },
-      {
-        name: "Smokehouse USDC",
-        vaultAddress: "0xBEeFFF209270748ddd194831b3fa287a5386f5bC",
-        asset: "USDC",
-      },
-      {
-        name: "Gauntlet USDC RWA",
-        vaultAddress: "0xA8875aaeBc4f830524e35d57F9772FfAcbdD6C45",
-        asset: "USDC",
+        poolId: "9d1a102c-92e7-4536-bdea-b6cc693af428",
       },
     ],
   },
@@ -159,14 +155,16 @@ export const SUPPORTED_CHAINS: Record<number, ChainConfig> = {
     },
     morphoVaults: [
       {
-        name: "Moonwell Flagship USDC",
-        vaultAddress: "0xc1256Ae5FF1cf2719D4937adb3bbCCab2E00A2Ca",
+        name: "Edge Ultra Yeild USDC",
+        vaultAddress: "0x5435BC53f2C61298167cdB11Cdf0Db2BFa259ca0",
         asset: "USDC",
+        poolId: "c29704a4-3537-459d-bc4d-1f8812f28bcd",
       },
       {
-        name: "Steakhouse USDC",
-        vaultAddress: "0xbeeF010f9cb27031ad51e3333f9aF9C6B1228183",
+        name: "Clearstar USDC Reactor",
+        vaultAddress: "0x1D3b1Cd0a0f242d598834b3F2d126dC6bd774657",
         asset: "USDC",
+        poolId: "34b65551-cca1-48f4-9a62-2145c24e92a4",
       },
       {
         name: "Steakhouse High Yield USDC",
@@ -217,14 +215,16 @@ export const SUPPORTED_CHAINS: Record<number, ChainConfig> = {
     },
     morphoVaults: [
       {
-        name: "Steakhouse High Yield USDC",
-        vaultAddress: "0x5c0C306Aaa9F877de636f4d5822cA9F2E81563BA",
+        name: "Hyperithm USDC",
+        vaultAddress: "0x4B6F1C9E5d470b97181786b26da0d0945A7cf027",
         asset: "USDC",
+        poolId: "646df9da-01ef-4da5-9746-acbf12f70cfa",
       },
       {
-        name: "Steakhouse Prime USDC",
-        vaultAddress: "0x250CF7c82bAc7cB6cf899b6052979d4B5BA1f9ca",
+        name: "Glanto USDC",
+        vaultAddress: "0x55a2B207b0074E13AdCb858950a81B7a04775E0F",
         asset: "USDC",
+        poolId: "8b0a8a57-e1b0-4d69-ab5d-d858de1d4170",
       },
     ],
   },

@@ -11,6 +11,12 @@ import { fetchAaveYieldPools } from "./aaveService";
 // Types
 // ---------------------------------------------------------------------------
 
+export interface PoolPrediction {
+  predictedClass: string | null;
+  predictedProbability: number | null;
+  binnedConfidence: number | null;
+}
+
 export interface YieldPool {
   id: string;
   protocol: "aave-v3" | "morpho";
@@ -26,6 +32,8 @@ export interface YieldPool {
   tvlUsd: number;
   poolAddress: Address;
   poolMeta: string | null;
+  poolId: string;
+  predictions: PoolPrediction | null;
   isBest: boolean;
 }
 
@@ -40,6 +48,11 @@ interface DefiLlamaPool {
   apyReward: number | null;
   underlyingTokens: string[] | null;
   poolMeta: string | null;
+  predictions: {
+    predictedClass: string | null;
+    predictedProbability: number | null;
+    binnedConfidence: number | null;
+  } | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -95,24 +108,27 @@ function resolvePoolAddress(pool: DefiLlamaPool, chainId: number): Address {
     return chainConfig.aaveV3Pool;
   }
 
-  // Morpho: match by vault name first, then fall back to asset-only match
+  // 1. Best match: by DeFi Llama pool UUID
+  const byPoolId = chainConfig.morphoVaults.find((v) => v.poolId === pool.pool);
+  if (byPoolId) return byPoolId.vaultAddress;
+
+  // 2. Fallback: match by vault name
   const asset = extractAssetSymbol(pool.symbol);
   const readableName = VAULT_NAME_MAP[pool.symbol.toUpperCase()];
 
   if (readableName) {
-    // Try exact name match against our config
     const byName = chainConfig.morphoVaults.find(
       (v) => v.name === readableName && v.asset === asset,
     );
     if (byName) return byName.vaultAddress;
   }
 
-  // Fallback: first vault matching the asset on this chain
+  // 3. Fallback: first vault matching the asset on this chain
   const byAsset = chainConfig.morphoVaults.find((v) => v.asset === asset);
   if (byAsset) return byAsset.vaultAddress;
 
   console.warn(
-    `[MaxYield] No vault address for Morpho pool "${pool.symbol}" on chain ${chainId} — skipping`,
+    `[MaxYield] No vault address for Morpho pool "${pool.symbol}" (poolId: ${pool.pool}) on chain ${chainId} — skipping`,
   );
   return ZERO_ADDRESS;
 }
@@ -277,6 +293,8 @@ async function fetchMorphoPools(asset: SupportedAsset): Promise<YieldPool[]> {
         tvlUsd: p.tvlUsd,
         poolAddress,
         poolMeta: p.poolMeta,
+        poolId: p.pool,
+        predictions: p.predictions ?? null,
         isBest: false,
       };
     })

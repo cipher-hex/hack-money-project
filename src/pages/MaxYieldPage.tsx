@@ -8,7 +8,11 @@ import {
   type SupportedAsset,
   type ChainConfig,
 } from "../config/yieldConfig";
-import { fetchYieldPools, type YieldPool } from "../services/yieldService";
+import {
+  fetchYieldPools,
+  type YieldPool,
+  type PoolPrediction,
+} from "../services/yieldService";
 import {
   initLifiSdk,
   getComposerQuote,
@@ -57,6 +61,54 @@ const StatusBadge: React.FC<{ status: ExecutionStatus }> = ({ status }) => {
       )}
       {s.label}
     </span>
+  );
+};
+
+const PredictionCell: React.FC<{ predictions: PoolPrediction | null }> = ({
+  predictions,
+}) => {
+  if (!predictions || !predictions.predictedClass) {
+    return <span className="text-xs text-gray-300">—</span>;
+  }
+
+  const isUp =
+    predictions.predictedClass.toLowerCase().includes("up") ||
+    predictions.predictedClass.toLowerCase().includes("stable");
+  const isDown = predictions.predictedClass.toLowerCase().includes("down");
+
+  const badgeBg = isUp
+    ? "bg-green-100 text-green-700"
+    : isDown
+      ? "bg-red-100 text-red-700"
+      : "bg-gray-100 text-gray-600";
+
+  const confidence = predictions.binnedConfidence ?? 0;
+
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <span
+        className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${badgeBg}`}
+      >
+        {predictions.predictedClass}
+      </span>
+      {predictions.predictedProbability != null && (
+        <span className="text-[10px] text-gray-400">
+          {Math.round(predictions.predictedProbability)}%
+        </span>
+      )}
+      {confidence > 0 && (
+        <div className="flex gap-0.5" title={`Confidence: ${confidence}/3`}>
+          {[1, 2, 3].map((i) => (
+            <span
+              key={i}
+              className={`w-1.5 h-1.5 rounded-full ${
+                i <= confidence ? "bg-blue-500" : "bg-gray-200"
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -463,6 +515,7 @@ const MaxYieldPage: React.FC = () => {
                     <th className="pb-3 pr-4 text-right">Base APY</th>
                     <th className="pb-3 pr-4 text-right">Reward APY</th>
                     <th className="pb-3 pr-4 text-right">TVL</th>
+                    <th className="pb-3 pr-4 text-center">Prediction</th>
                     <th className="pb-3 text-center">Action</th>
                   </tr>
                 </thead>
@@ -492,6 +545,34 @@ const MaxYieldPage: React.FC = () => {
                             </span>
                           )}
                         </div>
+                        <div className="flex items-center gap-1 mt-1">
+                          <span
+                            className="text-[10px] font-mono text-gray-400"
+                            title={pool.poolId}
+                          >
+                            {pool.poolId.length > 12
+                              ? `${pool.poolId.slice(0, 8)}…${pool.poolId.slice(-4)}`
+                              : pool.poolId}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigator.clipboard.writeText(pool.poolId);
+                            }}
+                            className="text-gray-300 hover:text-blue-500 transition-colors"
+                            title="Copy Pool ID"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-3 w-3"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                              <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                            </svg>
+                          </button>
+                        </div>
                       </td>
                       <td className="py-4 pr-4">
                         <span className="font-medium text-gray-700">
@@ -519,6 +600,9 @@ const MaxYieldPage: React.FC = () => {
                       </td>
                       <td className="py-4 pr-4 text-right text-gray-600 font-medium">
                         {formatTvl(pool.tvlUsd)}
+                      </td>
+                      <td className="py-4 pr-4 text-center">
+                        <PredictionCell predictions={pool.predictions} />
                       </td>
                       <td className="py-4 text-center">
                         <button
