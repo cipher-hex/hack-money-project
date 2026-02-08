@@ -53,14 +53,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         await window.ethereum.request({ method: "eth_requestAccounts" });
         const provider = new ethers.providers.Web3Provider(window.ethereum);
 
-        // Check if we're on the correct network (sei testnet)
+        // Check if we're on the correct network (Arc testnet)
         const network = await provider.getNetwork();
-        if (network.chainId !== 1328) {
-          // sei testnet chain ID
+        if (network.chainId !== 5042002) {
+          // Arc testnet chain ID
           try {
             await window.ethereum.request({
               method: "wallet_switchEthereumChain",
-              params: [{ chainId: "0x530" }], // 1328 in hexadecimal
+              params: [{ chainId: "0x4CF1D2" }], // 5042002 in hexadecimal
             });
           } catch (switchError) {
             // Ensure switchError is an object with a code property
@@ -76,15 +76,15 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                   method: "wallet_addEthereumChain",
                   params: [
                     {
-                      chainId: "0x530",
-                      chainName: "Sei Testnet",
+                      chainId: "0x4CF1D2",
+                      chainName: "Arc Testnet",
                       nativeCurrency: {
-                        name: "SEI",
-                        symbol: "SEI",
+                        name: "USDC",
+                        symbol: "USDC",
                         decimals: 18,
                       },
-                      rpcUrls: ["https://evm-rpc-testnet.sei-apis.com"],
-                      blockExplorerUrls: ["https://seitrace.com/"],
+                      rpcUrls: ["https://rpc.testnet.arc.network"],
+                      blockExplorerUrls: ["https://testnet.arcscan.app/"],
                     },
                   ],
                 });
