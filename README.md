@@ -1,11 +1,13 @@
 # SafeWallet Pay
 
-A secure Mantle-based P2P payment platform with **escrow**, **refunds (including wrong-address sends)**, and **bulk transaction management**.  
-Built on **Mantle Sepolia testnet (5003)** with **Web3Auth** onboarding and a modern React UI.
+A secure **ARC Testnet-based** P2P payment platform featuring **Universal Payments**, **Max Yield Optimization**, **Escrow**, and **Bulk Transaction Management**.  
+Built on **ARC Testnet** with **Web3Auth** onboarding, **LiFi SDK** for cross-chain capabilities, and a modern React UI.
 
 ---
 
 ## 📤 Submission Info
+
+> **Submitted for HackMoney 2026 Hackathon**
 
 - **🌐 Live Demo**: [https://mantle-hack-defi-project.vercel.app/](https://mantle-hack-defi-project.vercel.app/)
 - **🎥 Presentation Video**: [https://youtu.be/0f7it-S-yyQ?si=nSX0KkfqKWn3FEZU](https://youtu.be/0f7it-S-yyQ?si=nSX0KkfqKWn3FEZU)
@@ -34,27 +36,44 @@ Traditional crypto payments have critical issues, especially for everyday users 
 
 ## 💡 Our Solution
 
-SafeWallet Pay adds a **smart-contract escrow layer** and rich UI on top of Mantle:
+SafeWallet Pay adds a **smart-contract escrow layer**, **Universal Payment System**, and **Max Yield Optimization** on top of ARC Testnet:
 
-1. **Escrow-first payments**
+1. **Universal Payment System**
+   - Senders deposit crypto assets on-chain into the **Yellow Vault** (Yellow Network state channels).
+   - Payments are sent instantly off-chain.
+   - Receivers claim funds on their **preferred blockchain** in their **preferred token**.
+   - Powered by **LiFi Composer** for seamless bridging and swapping.
+2. **Max Yield Optimizer**
+   - Utilizes **LiFi SDK** to bridge and swap stablecoins to the highest yielding protocols across multiple chains.
+3. **Escrow-first payments**
    - Funds are locked in the `SafePay` contract instead of going directly to the recipient.
-2. **Claim-based receiving**
-   - Recipients explicitly **claim** funds (MNT or ERC‑20) with a transaction ID.
-3. **Refunds for unclaimed & misdirected funds**
+4. **Claim-based receiving**
+   - Recipients explicitly **claim** funds (Native or ERC‑20) with a transaction ID.
+5. **Refunds for unclaimed & misdirected funds**
    - If a payment is never claimed, the **sender can refund** and recover the funds.
    - This gives a safety net for **wrong-address transfers**, as long as the funds remain unclaimed in escrow.
-4. **Bulk Transaction Manager**
+6. **Bulk Transaction Manager**
    - Send many payments in a single transaction to save cost and simplify operations.
-5. **Smooth onboarding**
+7. **Smooth onboarding**
    - Web3Auth enables social logins alongside traditional wallets.
 
-Result: a safer, more forgiving payment flow that still feels like normal crypto.
+Result: a safer, more forgiving, and universally compatible payment flow.
 
 ---
 
 ## ✨ Core Features
 
-### 1. 🔐 Safe P2P Escrow Payments
+### 1. 🌐 Universal Payment & Max Yield
+
+- **Universal Payment System**:
+  - Deposit on-chain assets to **Yellow Vault**.
+  - Instant internal transfers.
+  - Receiver claims in **any token on any chain** (Multichain Bridge & Swap via LiFi Composer).
+- **Max Yield**:
+  - Automatically routes stablecoins to the best yield opportunities.
+  - Uses **LiFi SDK** for efficient cross-chain bridging and swapping.
+
+### 2. 🔐 Safe P2P Escrow Payments
 
 - Funds always go **into escrow first**, not directly to the recipient.
 - Recipients **claim** funds using a transaction ID.
@@ -64,8 +83,8 @@ Result: a safer, more forgiving payment flow that still feels like normal crypto
     - **Wallet address**, or
     - **Registered user ID**.
   - Supported assets:
-    - Native **MNT** (Mantle).
-    - ERC‑20 tokens on Mantle Sepolia testnet.
+    - Native **ARC** tokens.
+    - ERC‑20 tokens on ARC Testnet.
 
 ### 2. 👥 Bulk Transaction Manager
 
@@ -93,10 +112,14 @@ Result: a safer, more forgiving payment flow that still feels like normal crypto
 
 ---
 
-## 🌍 How It Empowers Users on Mantle
+## 🌍 How It Empowers Users on ARC Testnet
 
+- **Universal Connectivity**
+  - Pay anyone, anywhere, regardless of their preferred chain or token.
+- **Yield Optimization**
+  - Idle stablecoins work harder with automated yield routing.
 - **Low fees & high throughput**
-  - Mantle's Layer 2 architecture provides low transaction costs while maintaining Ethereum security.
+  - ARC's architecture provides low transaction costs.
 - **Fast finality**
   - Quick block times enable real‑time retail payments and remittances.
 - **Refundable escrow in trust‑poor environments**
@@ -115,6 +138,8 @@ Result: a safer, more forgiving payment flow that still feels like normal crypto
 - **React 18 + TypeScript**
 - **Vite** for dev/build.
 - **Tailwind CSS** for styling.
+- **LiFi SDK & Composer** for cross-chain bridge and swap.
+- **Yellow Network** for state channels and instant payments.
 - **Wagmi v2 & Viem** for RPC and contract calls.
 - **Framer Motion** for animations.
 - **React Router** for client-side routing.
@@ -136,7 +161,7 @@ Result: a safer, more forgiving payment flow that still feels like normal crypto
 
 - **Web3Auth** for social & wallet-based login.
 - Primary target network:
-  - **Mantle Sepolia Testnet (Chain ID: 5003)**.
+  - **ARC Testnet**.
 
 ---
 
@@ -203,7 +228,7 @@ VITE_WEB3AUTH_CLIENT_ID=your_web3auth_client_id
 Create `.env` in the **backend** folder for deployments:
 
 ```bash
-PRIVATE_KEY=your_deployer_private_key   # EVM-compatible deployer on Mantle Sepolia
+PRIVATE_KEY=your_deployer_private_key   # EVM-compatible deployer on ARC Testnet
 ```
 
 ### 3. Run the Frontend
@@ -224,20 +249,20 @@ Production assets will be generated in `dist/`.
 
 ---
 
-## 📝 Smart Contract Deployment (Mantle Sepolia Testnet)
+## 📝 Smart Contract Deployment (ARC Testnet)
 
 ### 1. Deploy SafePay
 
 ```bash
 cd backend
-npx hardhat run scripts/safepay-deploy.js --network mantle-sepolia
+npx hardhat run scripts/safepay-deploy.js --network arc-testnet
 ```
 
 ### 2. Deploy BulkTransactionManager
 
 ```bash
 cd backend
-npx hardhat run scripts/deploy-bulk-transaction.js --network mantle-sepolia
+npx hardhat run scripts/deploy-bulk-transaction.js --network arc-testnet
 ```
 
 ### 3. Update Frontend Addresses
@@ -261,21 +286,21 @@ src/artifacts/BulkTransactionManager.json
 
 ---
 
-## 📍 Current Mantle Sepolia Testnet Deployment
+## 📍 Current ARC Testnet Deployment
 
 ### SafePay (Escrow Contract)
 
 - **Address**: `0x5e6c03E14002aF759680cd86ad4534D4b8FA0648`
-- **Chain ID**: `5003`
+- **Network**: `ARC Testnet`
 - **Deployed**: January 14, 2026
 - **Tokens**:
-  - Native: **MNT** (Mantle, 18 decimals)
-  - ERC‑20: Supported tokens on Mantle Sepolia
+  - Native: **ARC**
+  - ERC‑20: Supported tokens on ARC Testnet
 
 ### BulkTransactionManager
 
 - **Address**: `0xd4DA259c0d1aae023B5F19254697f7C307af5aE5`
-- **Chain ID**: `5003`
+- **Network**: `ARC Testnet`
 - **Deployed**: January 14, 2026
 
 These addresses are also configured in:
@@ -298,8 +323,8 @@ These addresses are also configured in:
   - `Ownable` for admin operations and controlled upgrades.
 - **Input & Amount Validation**
   - Frontend and contract-level checks for amounts, arrays, and addresses.
-- **Mantle Benefits**
-  - Low fees, fast finality, and Ethereum-compatible infrastructure with Layer 2 scalability.
+- **ARC Testnet Benefits**
+  - Scalable, low-cost infrastructure.
 
 ---
 
@@ -325,4 +350,4 @@ These addresses are also configured in:
 - **Fiat on‑ramp/off‑ramp** integration.
 - Bulk payout analytics & CSV export.
 
-SafeWallet Pay brings **safer, refundable and scalable bulk crypto payments** to Mantle — tailored for real users and businesses across the World.
+SafeWallet Pay brings **safer, refundable, and universally compatible crypto payments** to ARC Testnet — tailored for real users and businesses across the World.

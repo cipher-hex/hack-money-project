@@ -46,6 +46,10 @@ const MainHeader: React.FC = () => {
       label: "Bridge & Swap",
     },
     {
+      href: "/universal-pay",
+      label: "Universal Pay",
+    },
+    {
       href: "/max-yield",
       label: "Max Yield",
     },
