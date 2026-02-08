@@ -16,12 +16,8 @@ interface Ethereum {
   removeListener: (event: string, callback: () => void) => void;
 }
 
-// Declare the ethereum property on the window object
-declare global {
-  interface Window {
-    ethereum?: Ethereum;
-  }
-}
+// Note: window.ethereum is already declared as `any` by @coinbase/wallet-sdk.
+// We keep the Ethereum interface above for local type safety via casting.
 
 interface WalletContextType {
   address: string | null;
@@ -104,7 +100,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         const signer = provider.getSigner();
         const address = await signer.getAddress();
         const balance = ethers.utils.formatEther(
-          await provider.getBalance(address)
+          await provider.getBalance(address),
         );
 
         setAddress(address);
@@ -137,7 +133,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       if (window.ethereum) {
         window.ethereum.removeListener("accountsChanged", disconnectWallet);
         window.ethereum.removeListener("chainChanged", () =>
-          window.location.reload()
+          window.location.reload(),
         );
       }
     };

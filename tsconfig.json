@@ -16,6 +16,12 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src", "src/components/sendTransaction.tsx", "src/components/switchNetwork.tsx", "src/components/writeContract.tsx", "src/components/getBalance.tsx"],
+  "include": [
+    "src",
+    "src/components/sendTransaction.tsx",
+    "src/components/switchNetwork.tsx",
+    "src/components/writeContract.tsx",
+    "src/components/getBalance.tsx"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
